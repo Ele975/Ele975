@@ -145,8 +145,18 @@ def create_img(img_name, img, dic, rot_y):
 #     return new_end_point
 
 
-# fins total hull square space
+# fins total hull square space in the middle of all images
 def hull_space():
+    # hull space of 20x20x60 (to be sure because of projection)
+    for i in range(20):
+        for j in range(20):
+            for k in range(60):
+                loc = [10-i, 10-j, 40-k]
+                # fill cubes coordinates array
+                cubes.append(loc)
+                bpy.ops.mesh.primitive_cube_add(size=1.0, location= loc)
+
+
     
     
             
@@ -217,5 +227,8 @@ for i in range(len(angles)):
 # ray_light(img2,'img2',dic_img2, pos_lights[1], corners_coord)
 # ray_light(img3,'img3',dic_img3, pos_lights[2], corners_coord)
 
+
+cubes=[]
 hull_space()
+
 
