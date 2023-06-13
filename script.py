@@ -88,6 +88,8 @@ def create_img(img_name, img, dic, rot_y):
                 material.diffuse_color = (1, 1, 1,1)  # Replace with desired color
             else:
                 material.diffuse_color = (0, 0, 0,0)  # Replace with desired color
+            pixel.data.materials.append(material) #add the material to the object
+            # bpy.context.object.active_material.diffuse_color = (1, 0, 0) #change color
 
 
 
@@ -97,64 +99,67 @@ def create_img(img_name, img, dic, rot_y):
 # Create light rays -> use a mesh and attach it to an object, then insert in collection
 # create a ray for each pixel center
 
-# def ray_light(img, name, dic, pos_light, corners):
-#             # light position
-#             init_coord = [pos_light[0], pos_light[1], pos_light[2]]
-#             # boundary piyel positions
-#             end_coord_bl = [dic[(0,0)][0],dic[(0,0)][1],dic[(0,0)][2]]
-#             end_coord_br = [dic[(0,img_size-1)][0],dic[(0,img_size-1)][1],dic[(0,img_size-1)][2]]
-#             end_coord_tl = [dic[(img_size-1,0)][0],dic[(img_size-1,0)][1],dic[(img_size-1,0)][2]]
-#             end_coord_tr = [dic[(img_size-1, img_size-1)][0],dic[(img_size-1, img_size-1)][1],dic[(img_size-1, img_size-1)][2]]
+def ray_light(img, name, dic, pos_light, corners):
+            # light position
+            init_coord = [pos_light[0], pos_light[1], pos_light[2]]
+            # boundary piyel positions
+            end_coord_bl = [dic[(0,0)][0],dic[(0,0)][1],dic[(0,0)][2]]
+            end_coord_br = [dic[(0,img_size-1)][0],dic[(0,img_size-1)][1],dic[(0,img_size-1)][2]]
+            end_coord_tl = [dic[(img_size-1,0)][0],dic[(img_size-1,0)][1],dic[(img_size-1,0)][2]]
+            end_coord_tr = [dic[(img_size-1, img_size-1)][0],dic[(img_size-1, img_size-1)][1],dic[(img_size-1, img_size-1)][2]]
 
-#             end_coords = [end_coord_bl, end_coord_br, end_coord_tl, end_coord_tr]
+            end_coords = [end_coord_bl, end_coord_br, end_coord_tl, end_coord_tr]
 
-#             info = [name,init_coord]
+            info = [name,init_coord]
 
-#             # create lines from the light point to the center of each pixel. Increase then the length of the lines to know the space
-#             # to build the hull
-#             for i in range(len(end_coords)):
-#                 end_point =increase_line_length(init_coord, end_coords[i],30)
-#                 info.append(end_point)
-#                 verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
-#                 edges = [(0, 1)]
-#                 ray_light = bpy.data.meshes.new('ray' + str(name))
-#                 ray_light.from_pydata(verts, edges, [])
-#                 ray_light.update()
-#                 mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
-#                 lights.objects.link(mesh_obj)
+            # create lines from the light point to the center of each pixel. Increase then the length of the lines to know the space
+            # to build the hull
+            for i in range(len(end_coords)):
+                end_point =increase_line_length(init_coord, end_coords[i],30)
+                info.append(end_point)
+                verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
+                edges = [(0, 1)]
+                ray_light = bpy.data.meshes.new('ray' + str(name))
+                ray_light.from_pydata(verts, edges, [])
+                ray_light.update()
+                mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
+                lights.objects.link(mesh_obj)
 
-#             corners.append(info)
+            corners.append(info)
 
 
-# def increase_line_length(start_point, end_point, length_increase):
-#     # Calculate direction vector of the line
-#     direction = [(end_point[i] - start_point[i]) for i in range(3)]
+def increase_line_length(start_point, end_point, length_increase):
+    # Calculate direction vector of the line
+    direction = [(end_point[i] - start_point[i]) for i in range(3)]
     
-#     # Calculate current length of the line
-#     current_length = math.sqrt(sum([direction[i] ** 2 for i in range(3)]))
+    # Calculate current length of the line
+    current_length = math.sqrt(sum([direction[i] ** 2 for i in range(3)]))
     
-#     # Calculate scaling factor to increase the line length
-#     scaling_factor = (current_length + length_increase) / current_length
+    # Calculate scaling factor to increase the line length
+    scaling_factor = (current_length + length_increase) / current_length
     
-#     # Scale direction vector
-#     scaled_direction = [direction[i] * scaling_factor for i in range(3)]
+    # Scale direction vector
+    scaled_direction = [direction[i] * scaling_factor for i in range(3)]
     
-#     # Calculate new end point of the line
-#     new_end_point = [(start_point[i] + scaled_direction[i]) for i in range(3)]
+    # Calculate new end point of the line
+    new_end_point = [(start_point[i] + scaled_direction[i]) for i in range(3)]
     
-#     return new_end_point
+    return new_end_point
 
 
 # fins total hull square space in the middle of all images
 def hull_space():
-    # hull space of 20x20x60 (to be sure because of projection)
-    for i in range(20):
+    # hull space of 20x20x60 (to be sure because of projection) -> used to visualise entire hull space
+    # loc=[0,0,5]
+    # bpy.ops.mesh.primitive_cube_add(size=20.0, location= loc)
+
+    # voxels of size 1
+    for i in range(20): 
         for j in range(20):
-            for k in range(60):
-                loc = [10-i, 10-j, 40-k]
-                # fill cubes coordinates array
-                cubes.append(loc)
-                bpy.ops.mesh.primitive_cube_add(size=1.0, location= loc)
+            for k in range(20):
+                loc = [10-i, 10-j, k-5]
+                cubes_coord.append(loc)
+
 
 
     
@@ -221,14 +226,13 @@ for i in range(len(angles)):
 
 
 # # array containing name of the image the rays belong to and starting_point(light), ending_point1,ending_point2... of corner pixels for each img
-# corners_coord = []
+corners_coord = []
 
-# ray_light(img1,'img1', dic_img1, pos_lights[0], corners_coord)
-# ray_light(img2,'img2',dic_img2, pos_lights[1], corners_coord)
-# ray_light(img3,'img3',dic_img3, pos_lights[2], corners_coord)
+ray_light(img1,'img1', dic_img1, pos_lights[0], corners_coord)
+ray_light(img2,'img2',dic_img2, pos_lights[1], corners_coord)
+ray_light(img3,'img3',dic_img3, pos_lights[2], corners_coord)
 
 
-cubes=[]
+cubes_coord=[]
 hull_space()
-
-
+print(len(cubes_coord))
