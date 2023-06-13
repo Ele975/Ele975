@@ -64,16 +64,55 @@ def create_img(img_name, img, dic, rot_y):
     for i in range(len(img)):
         for j in range(len(img[i])):
             loc = []
+            # in px_plane insert corners of plane
             if img_name == 'img3':
                 loc = [-20,j-4,i]
+                if (img[i][j] == 1):
+                    #upper left
+                    px_plane_coord.append([loc[0], loc[1]+0.5, loc[2]+0.5])
+                    #upper right
+                    px_plane_coord.append([loc[0], loc[1]-0.5, loc[2]+0.5])
+                    #bottom left
+                    px_plane_coord.append([loc[0], loc[1]+0.5, loc[2]-0.5])
+                    #bottom right
+                    px_plane_coord.append([loc[0], loc[1]-0.5, loc[2]-0.5])
+
             elif img_name == 'img4':
                 loc = [j-4,-20,i]
+                if (img[i][j] == 1):
+                    #upper left
+                    px_plane_coord.append([loc[0]-0.5, loc[1], loc[2]+0.5])
+                    #upper right
+                    px_plane_coord.append([loc[0]+0.5, loc[1], loc[2]+0.5])
+                    #bottom left
+                    px_plane_coord.append([loc[0]-0.5, loc[1], loc[2]-0.5])
+                    #bottom right
+                    px_plane_coord.append([loc[0]+0.5, loc[1], loc[2]-0.5])
+
             elif img_name == 'img1':
-                loc = [20,j-4,i]
+                if (img[i][j] == 1):
+                    loc = [20,j-4,i]
+                    #upper left
+                    px_plane_coord.append([loc[0], loc[1]-0.5, loc[2]+0.5])
+                    #upper right
+                    px_plane_coord.append([loc[0], loc[1]+0.5, loc[2]+0.5])
+                    #bottom left
+                    px_plane_coord.append([loc[0], loc[1]-0.5, loc[2]-0.5])
+                    #bottom right
+                    px_plane_coord.append([loc[0], loc[1]+0.5, loc[2]-0.5])
             else:
                 loc = [j-4,20,i]
-            # Create planes as pixels
+                if (img[i][j] == 1):
+                    #upper left
+                    px_plane_coord.append([loc[0]+0.5, loc[1], loc[2]+0.5])
+                    #upper right
+                    px_plane_coord.append([loc[0]-0.5, loc[1], loc[2]+0.5])
+                    #bottom left
+                    px_plane_coord.append([loc[0]+0.5, loc[1], loc[2]-0.5])
+                    #bottom right
+                    px_plane_coord.append([loc[0]-0.5, loc[1], loc[2]-0.5])
 
+            # Create planes as pixels
             bpy.ops.mesh.primitive_plane_add(size=1.0, location= loc)
             pixel = bpy.context.object
             pixel.name = "Pixel"
@@ -82,14 +121,15 @@ def create_img(img_name, img, dic, rot_y):
                 pixel.rotation_euler[2] = rot_y
 
             dic[i,j] = loc
-            # Assign a unique material to each pixel
+
+
+            # color in black active pixels
             material = bpy.data.materials.new(name="PixelMaterial")
             if img[i][j] == 0:
                 material.diffuse_color = (1, 1, 1,1)  # Replace with desired color
             else:
                 material.diffuse_color = (0, 0, 0,0)  # Replace with desired color
             pixel.data.materials.append(material) #add the material to the object
-            # bpy.context.object.active_material.diffuse_color = (1, 0, 0) #change color
 
 
 
@@ -99,7 +139,7 @@ def create_img(img_name, img, dic, rot_y):
 # Create light rays -> use a mesh and attach it to an object, then insert in collection
 # create a ray for each pixel center
 
-def ray_light(img, name, dic, pos_light, corners):
+def ray_light(name, dic, pos_light, corners):
             # light position
             init_coord = [pos_light[0], pos_light[1], pos_light[2]]
             # boundary piyel positions
@@ -159,6 +199,11 @@ def hull_space():
             for k in range(20):
                 loc = [10-i, 10-j, k-5]
                 cubes_coord.append(loc)
+                # for each voxel create ray from voxel center to each light center
+                for i in range(len(pos_lights)):
+                    ray = [loc[0] - pos_lights[i][0],loc[1] - pos_lights[i][1],loc[2] - pos_lights[i][2]]
+                    cubes_ray.append(ray)
+
 
 
 
@@ -180,14 +225,16 @@ bpy.context.scene.collection.children.link(lights)
     
 # pixel input images -> example
 img_size = 9
+# contains 4 vertices of plane which represent pixels, used for intersection with cube rays. Take only active pixels
+px_plane_coord = []
 img1 = [[0 for i in range(img_size)] for j in range(img_size)]
 img2 = [[0 for i in range(img_size)] for j in range(img_size)]
-img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-img4 = [[0 for i in range(img_size)] for j in range(img_size)]
+# img3 = [[0 for i in range(img_size)] for j in range(img_size)]
+# img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
 #square NEED TO CHANGE
-for i in range(len(img1)):
-    for j in range(len(img1[i])):
+for i in range(img_size):
+    for j in range(img_size):
         if i >= 2 and i < 8:
             if j >= 2 and j < 8:
                 img1[i][j] = 1
@@ -219,7 +266,7 @@ dic_img4 = {}
 # for i in range(nr_img):
 create_img('img1',img1,dic_img1, math.radians(90))
 create_img('img2',img2,dic_img2,  math.radians(90))
-create_img('img3',img3,dic_img3,  math.radians(90))
+# create_img('img3',img3,dic_img3,  math.radians(90))
 
 for i in range(len(angles)):
     create_light(pos_lights[i])
@@ -228,11 +275,12 @@ for i in range(len(angles)):
 # # array containing name of the image the rays belong to and starting_point(light), ending_point1,ending_point2... of corner pixels for each img
 corners_coord = []
 
-ray_light(img1,'img1', dic_img1, pos_lights[0], corners_coord)
-ray_light(img2,'img2',dic_img2, pos_lights[1], corners_coord)
-ray_light(img3,'img3',dic_img3, pos_lights[2], corners_coord)
+# ray_light('img1', dic_img1, pos_lights[0], corners_coord)
+# ray_light('img2',dic_img2, pos_lights[1], corners_coord)
+# ray_light('img3',dic_img3, pos_lights[2], corners_coord)
 
-
+# coordinates of voxels
 cubes_coord=[]
+# for each voxel rays from voxel center to each light source
+cubes_ray = []
 hull_space()
-print(len(cubes_coord))
