@@ -15,6 +15,17 @@ angles=[]
 for i in range(int(nr_img)):
     angles.append(int(sys.argv[i + 5]))
 
+img_name= []
+for e in angles:
+    if e == 0:
+        img_name.append('img1')
+    if e == 90:
+        img_name.append('img2')
+    if e == 180:
+        img_name.append('img3')
+    if e == 270:
+        img_name.append('img4')
+
 
 
 
@@ -109,7 +120,6 @@ def create_img(img_name, img, dic, rot_y):
                     temp.append([loc[0]+0.5, loc[1], loc[2]-0.5])
                     #bottom right
                     temp.append([loc[0]-0.5, loc[1], loc[2]-0.5])
-            px_plane_coord[img_name] = temp
 
             # Create planes as pixels
             bpy.ops.mesh.primitive_plane_add(size=1.0, location= loc)
@@ -122,13 +132,15 @@ def create_img(img_name, img, dic, rot_y):
             dic[i,j] = loc
 
 
-            # color in black active pixels
+            # add color for active pixels (black)
             material = bpy.data.materials.new(name="PixelMaterial")
             if img[i][j] == 0:
-                material.diffuse_color = (1, 1, 1,1)  # Replace with desired color
+                material.diffuse_color = (1, 1, 1,0)  
             else:
-                material.diffuse_color = (0, 0, 0,0)  # Replace with desired color
-            pixel.data.materials.append(material) #add the material to the object
+                material.diffuse_color = (0, 0, 0,0)  
+            pixel.data.materials.append(material) 
+
+    px_plane_coord[img_name] = temp
 
 
 
@@ -200,27 +212,87 @@ def hull_space():
                 cubes_coord.append(loc)
                 # for each voxel create ray from voxel center to each light center
                 for i in range(len(pos_lights)):
-                    ray = [loc[0] - pos_lights[i][0],loc[1] - pos_lights[i][1],loc[2] - pos_lights[i][2]]
+                    ray = [loc[0], loc[1], loc[2], pos_lights[i][0] - loc[0], pos_lights[i][1] - loc[1], pos_lights[i][2] - loc[2]]
                     cubes_ray.append(ray)
 
-# define active voxels checking for each voxel ray if it is intersect the image, and if yes, if the intersection point lies in an active pixel
+
+# define active voxels checking for each voxel ray the point of intersection with each image, and having all corner coordinates of each pixel, check within which pixel is it and store True if is in an active pixel
+# if the cube ray intersect an active pixel in each image, set it to true
 def active_voxels(epsilon=1e-6):
     # for each ray, for each active corner pixel positions check if they intersect
-    for i,e in enumerate(cubes_ray):
+    for i in range(len(cubes_ray)):
+        origin = [cubes_ray[i][0], cubes_ray[i][1], cubes_ray[i][2]]
+        ray = [cubes_ray[i][3],cubes_ray[i][4],cubes_ray[i][5]]
+        # insert names of images for which the voxel ray intersect an active pixel -> it is possible to have more rays that insersect the same pixel, then store names to ensure ray intersect at least one active pixel for each img
+        active_check = []
+        # cube raz doesn't intesect all valid pixels in all images
+        invalid = False
+
         for k in px_plane_coord.keys():
             # random point on plane to get point of intersection if any
             ref_px = px_plane_coord[k][0]
             # get normal of plane knowing the name of the image
             normal = []
+            img_name = None
             if k == 'img1' or k == 'img3':
+                img_name = 'img13'
+                # image on x axis
                 normal = [1,0,0]
             else:
+                img_name = 'img24'
+                #image on y axis
                 normal = [0,1,0]
             # check if voxel ray intersect image 
             # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
-            dot = (cubes_ray[0] * normal[0]) +(cubes_ray[1] * normal[1]) + (cubes_ray[2] * normal[2])
+            dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
             if dot > epsilon:
                 # find point of intersection
+                # difference between point on plane and origin of ray
+                w = [ref_px[0] - origin[0], ref_px[1] - origin[1], ref_px[2] - origin[2]]
+                # distance
+                t = ((w[0] * norma[0]) + (w[1] * normal[1]) + (w[2] * normal[2]))/dot
+                # general formula for ray -> td + o
+                td = (t[0] * ray[0]) + (t[1] * ray[1]) + (t[2] * ray[2])
+
+                point = [td[0] + origin[0], td[1] + origin[1], td[2] + origin[2]]
+
+                # check in which pixel the intersection point is, set one value True for the cube if active pixel
+                for i in range(px_plane_coord[k]):
+                    # pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
+                        # check z coordinate bottom and up boundary
+                        if point[2] < px_plane_coord[k][i][0][2] and point[2] >= pl_plane_coord[k][i][2][2]:
+                            if img_name == 'img13':
+                                # check y coordinate left and right boundary
+                                if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
+                                    # append name of img the active pixel belongs to
+                                    active_check.append(img_name)
+                            else:
+                                if point[0] < px_plane_coord[k][i][1][0] and point[1] >= px_plane_coord[k][i][0][0]:
+                                    active_check.append(img_name)
+        # check that ray intersect valid pixels of all images, if not set invalid to false and go to next cube ray
+        for e in img_names:
+            if e not in active_check:
+                invalid = True
+                break
+        if invalid:
+            continue
+        # else:
+            # create activ voxel
+
+
+
+
+
+                                
+
+
+
+
+
+
+
+
+
                 
 
 
@@ -303,9 +375,9 @@ ray_light('img3',dic_img3, pos_lights[2], corners_coord)
 
 # coordinates of voxels
 cubes_coord=[]
-# for each voxel rays from voxel center to each light source
+# for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
 cubes_ray = []
 hull_space()
 
 # cubes which rays passes through active pixels for each image
-active_cubes = []
+active_cubes = {}
