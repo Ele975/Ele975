@@ -151,6 +151,7 @@ def create_img(img_name, img, dic, rot_y):
                 material.diffuse_color = (0, 0, 0,0)  
             pixel.data.materials.append(material) 
 
+
     # if no active pixel found in the current image, remove image from dictionary px_plane_coord because empty value
     if empty:
         px_plane_coord.pop(img_name)
@@ -238,6 +239,7 @@ def hull_space():
 # if the cube ray intersect an active pixel in each image, set it to true
 # for each ray, for each active corner pixel positions check if they intersect
 def active_voxels(epsilon=1e-6):
+    # print(px_plane_coord['img3'])
     nr_rays_per_voxel = len(pos_lights)
     counter = 0
     # insert names of images for which the voxel ray intersect an active pixel -> it is possible to have more rays that insersect the same pixel, then store names to ensure ray intersect at least one active pixel for each img
@@ -308,10 +310,13 @@ def active_voxels(epsilon=1e-6):
                     fac = - dot_v3v3(normal,w)/dot
                     u = mul_v3_fl(ray,fac)
                     point = add_v3v3(origin, u)
-                    print(k)
-                    print(origin)
-                    print(point)
-                    print('\n')
+
+                    # if k == 'img3':
+                    # print(k)
+                        # print(origin)
+                        # print(point)
+                        # print('------------')
+                        # print('\n')
 
                     # check if intersection of ray with correct image -> bound coordinates
                     # if (point[0] > 40 or point[1] > 40 or point[2] > 40):
@@ -323,22 +328,32 @@ def active_voxels(epsilon=1e-6):
                         # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                         # check z coordinate bottom and up boundary
                         if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
-                            if k == 'img1' or k == 'img3':
+                            if k == 'img1':
                                 # check y coordinate left and right boundary
                                 if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
                                     # append name of img the active pixel belongs to
+                                    # print(k)
+                                    # print(point)
+                                    # print(px_plane_coord[k][i])
+                                    # print('\n')
+                                    active_check.append(k)
+                            elif k == 'img3':
+                                if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
+                                    active_check.append(k)
+                            elif k == 'img2':
+                                if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
                                     active_check.append(k)
                             else:
-                                if point[0] < px_plane_coord[k][i][1][0] and point[1] >= px_plane_coord[k][i][0][0]:
+                                if point[0] >= px_plane_coord[k][i][0][0] and point[0] < px_plane_coord[k][i][1][0]:
                                     active_check.append(k)
 
 
-
-        if (counter % 3 == 0):
+        if counter % 3 == 0 and origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
+            print(active_check)
             # check that ray intersect valid pixels of all images, if not set invalid to false and go to next cube ray
-            if 'img1' in active_check and 'img2' in active_check and 'img3' in active_check:
-                print(active_check)
-                print('\n')
+            # if 'img1' in active_check and 'img2' in active_check and 'img3' in active_check:
+                # print(active_check)
+                # print('\n')
             # if len(active_check) != 0:
             #     # print(active_check)
             #     for e in img_names:
@@ -406,7 +421,7 @@ img_size = 9
 img1 = [[0 for i in range(img_size)] for j in range(img_size)]
 img2 = [[0 for i in range(img_size)] for j in range(img_size)]
 img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img4 = [[0 for i in range(img_size)] for j in range(img_size)]
+img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
 #square NEED TO CHANGE
 for i in range(img_size):
@@ -418,6 +433,7 @@ for i in range(img_size):
         img1[i][j] = 1
         img2[i][j] = 1
         img3[i][j] = 1
+        img4[i][j] = 1
 
 
 # coordinates of all lights depending on angle
@@ -451,6 +467,7 @@ px_plane_coord = {}
 create_img('img1',img1,dic_img1, math.radians(90))
 create_img('img2',img2,dic_img2,  math.radians(90))
 create_img('img3',img3,dic_img3,  math.radians(90))
+create_img('img4',img4,dic_img4,  math.radians(90))
 
 for i in range(len(angles)):
     create_light(pos_lights[i])
@@ -462,6 +479,7 @@ corners_coord = []
 ray_light('img1', dic_img1, pos_lights[0], corners_coord)
 ray_light('img2',dic_img2, pos_lights[1], corners_coord)
 ray_light('img3',dic_img3, pos_lights[2], corners_coord)
+ray_light('img4',dic_img4, pos_lights[3], corners_coord)
 
 # coordinates of voxels
 cubes_coord=[]
