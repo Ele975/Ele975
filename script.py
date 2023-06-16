@@ -248,10 +248,11 @@ def active_voxels(epsilon=1e-6):
 
 
 
-        if origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
+        # if origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
+            
             # bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
 
-            
+
             # verts = [(origin), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
             # edges = [(0, 1)]
             # ray_light = bpy.data.meshes.new('ray')
@@ -284,64 +285,64 @@ def active_voxels(epsilon=1e-6):
             # mesh_obj = bpy.data.objects.new('obj_', ray_light)
             # lights.objects.link(mesh_obj)
 
-            point = []
+        point = []
 
-            for k in px_plane_coord.keys():
-                # print(px_plane_coord[k])
-                # random point on plane to get point of intersection if any
-                ref_px = px_plane_coord[k][0][0]
-                # print(ref_px)
-                # get normal of plane knowing the name of the image depending on its orientation
-                normal = []
-                if k == 'img1': 
-                    # image on positive x axis
-                    normal = [1,0,0]
-                elif k == 'img2':
-                    #image on negative y axis
-                    normal = [0,1,0]
-                elif k == 'img3':
-                    #image on negative y axis
-                    normal = [-1,0,0]
-                else:
-                    normal = [0,-1,0]
-                # check if voxel ray intersect image 
-                # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
-                dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
-                if dot > epsilon:
-                    # find point of intersection
-                    # difference between point on plane and origin of ray
-                    w = [origin[0] - ref_px[0] , origin[1] - ref_px[1], origin[2] - ref_px[2]]
-                    fac = - dot_v3v3(normal,w)/dot
-                    u = mul_v3_fl(ray,fac)
-                    point = add_v3v3(origin, u)
-
-
-                    # check if intersection of ray with correct image -> bound coordinates
-                    # if (point[0] > 40 or point[1] > 40 or point[2] > 40):
+        for k in px_plane_coord.keys():
+            # print(px_plane_coord[k])
+            # random point on plane to get point of intersection if any
+            ref_px = px_plane_coord[k][0][0]
+            # print(ref_px)
+            # get normal of plane knowing the name of the image depending on its orientation
+            normal = []
+            if k == 'img1': 
+                # image on positive x axis
+                normal = [1,0,0]
+            elif k == 'img2':
+                #image on negative y axis
+                normal = [0,1,0]
+            elif k == 'img3':
+                #image on negative y axis
+                normal = [-1,0,0]
+            else:
+                normal = [0,-1,0]
+            # check if voxel ray intersect image 
+            # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
+            dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
+            if dot > epsilon:
+                # find point of intersection
+                # difference between point on plane and origin of ray
+                w = [origin[0] - ref_px[0] , origin[1] - ref_px[1], origin[2] - ref_px[2]]
+                fac = - dot_v3v3(normal,w)/dot
+                u = mul_v3_fl(ray,fac)
+                point = add_v3v3(origin, u)
 
 
-                    # check in which pixel the intersection point is, set one value True for the cube if active pixel
-                    for i in range(len(px_plane_coord[k])):
-                        # print(px_plane_coord[k][i])
-                        # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
-                        # check z coordinate bottom and up boundary
-                        if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
-                            # check y coordinates for img1 and img3 and x coordinates for img2 and img4. Append if intersection found
-                            if k == 'img1':
-                                if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
-                                    active_check.append(k)
-                            elif k == 'img3':
-                                if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
-                                    active_check.append(k)
-                            elif k == 'img2':
-                                if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
-                                    active_check.append(k)
-                            else:
-                                if point[0] >= px_plane_coord[k][i][0][0] and point[0] < px_plane_coord[k][i][1][0]:
-                                    active_check.append(k)
+                # check if intersection of ray with correct image -> bound coordinates
+                # if (point[0] > 40 or point[1] > 40 or point[2] > 40):
+
+
+                # check in which pixel the intersection point is, set one value True for the cube if active pixel
+                for i in range(len(px_plane_coord[k])):
+                    # print(px_plane_coord[k][i])
+                    # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
+                    # check z coordinate bottom and up boundary
+                    if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
+                        # check y coordinates for img1 and img3 and x coordinates for img2 and img4. Append if intersection found
+                        if k == 'img1':
+                            if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
+                                active_check.append(k)
+                        elif k == 'img3':
+                            if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
+                                active_check.append(k)
+                        elif k == 'img2':
+                            if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
+                                active_check.append(k)
+                        else:
+                            if point[0] >= px_plane_coord[k][i][0][0] and point[0] < px_plane_coord[k][i][1][0]:
+                                active_check.append(k)
 
         # check that all rays (depending on the number of imgs) of each voxel intersect active pixels. If yes, make them active (create them)
-        if counter % nr_img == 0 and origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
+        if counter % nr_img == 0:
             for e in img_names:
                 if e not in active_check:
                     invalid = True
@@ -349,14 +350,9 @@ def active_voxels(epsilon=1e-6):
             if invalid:
                 continue
             else:
+            # else:
                 bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
-                # verts = [(origin), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
-                # edges = [(0, 1)]
-                # ray_light = bpy.data.meshes.new('ray')
-                # ray_light.from_pydata(verts, edges, [])
-                # ray_light.update()
-                # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-                # lights.objects.link(mesh_obj)
+
 
 
 
