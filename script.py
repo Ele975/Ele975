@@ -225,95 +225,159 @@ def hull_space():
                 loc = [10-i, 10-j, k-5]
                 cubes_coord.append(loc)
                 # for each voxel create ray from voxel center to each light center
-                for i in range(len(pos_lights)):
-                    ray = [loc[0], loc[1], loc[2], pos_lights[i][0] - loc[0], pos_lights[i][1] - loc[1], pos_lights[i][2] - loc[2]]
+                for l in range(len(pos_lights)):
+                    ray = [loc[0], loc[1], loc[2], pos_lights[l][0] - loc[0], pos_lights[l][1] - loc[1], pos_lights[l][2] - loc[2]]
+                    # print(i,j,k)
+                    # print(ray)
+                    # print('\n')
                     cubes_ray.append(ray)
+    # print(cubes_ray)
 
 
 # define active voxels checking for each voxel ray the point of intersection with each image, and having all corner coordinates of each pixel, check within which pixel is it and store True if is in an active pixel
 # if the cube ray intersect an active pixel in each image, set it to true
+# for each ray, for each active corner pixel positions check if they intersect
 def active_voxels(epsilon=1e-6):
-    # for each ray, for each active corner pixel positions check if they intersect
+    nr_rays_per_voxel = len(pos_lights)
+    counter = 0
+    # insert names of images for which the voxel ray intersect an active pixel -> it is possible to have more rays that insersect the same pixel, then store names to ensure ray intersect at least one active pixel for each img
+    active_check = []
     for i in range(len(cubes_ray)):
+        # more same ray origin because more rays per voxel, then check if active voxel when all its rays intersect active pixels (nr rays = len(pos_lights))
+        counter += 1
         origin = [cubes_ray[i][0], cubes_ray[i][1], cubes_ray[i][2]]
         ray = [cubes_ray[i][3],cubes_ray[i][4],cubes_ray[i][5]]
-        # insert names of images for which the voxel ray intersect an active pixel -> it is possible to have more rays that insersect the same pixel, then store names to ensure ray intersect at least one active pixel for each img
-        active_check = []
         # cube raz doesn't intesect all valid pixels in all images
         invalid = False
 
-        for k in px_plane_coord.keys():
-            # print(px_plane_coord[k])
-            # random point on plane to get point of intersection if any
-            ref_px = px_plane_coord[k][0][0]
-            # get normal of plane knowing the name of the image
-            normal = []
-            img_name = None
-            if k == 'img1' or k == 'img3':
-                img_name = 'img13'
-                # image on x axis
-                normal = [1,0,0]
-            else:
-                img_name = 'img24'
-                #image on y axis
-                normal = [0,1,0]
-            # check if voxel ray intersect image 
-            # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
-            dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
-            if dot > epsilon:
-                # find point of intersection
-                # difference between point on plane and origin of ray
-                w = [ref_px[0] - origin[0], ref_px[1] - origin[1], ref_px[2] - origin[2]]
-                # distance
-                t = ((w[0] * normal[0]) + (w[1] * normal[1]) + (w[2] * normal[2]))/dot
-                # general formula for ray -> td + o
-                td = [t * ray[0], t * ray[1], t * ray[2]]
 
-                point = [td[0] + origin[0], td[1] + origin[1], td[2] + origin[2]]
-                # print(point)
-                # check in which pixel the intersection point is, set one value True for the cube if active pixel
+
+        if origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
+            bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
+            verts = [(origin), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
+            edges = [(0, 1)]
+            ray_light = bpy.data.meshes.new('ray')
+            ray_light.from_pydata(verts, edges, [])
+            ray_light.update()
+            mesh_obj = bpy.data.objects.new('obj_', ray_light)
+            lights.objects.link(mesh_obj)
+
+            verts = [(origin), (pos_lights[1][0], pos_lights[1][1], pos_lights[1][2])]
+            edges = [(0, 1)]
+            ray_light = bpy.data.meshes.new('ray')
+            ray_light.from_pydata(verts, edges, [])
+            ray_light.update()
+            mesh_obj = bpy.data.objects.new('obj_', ray_light)
+            lights.objects.link(mesh_obj)
+
+            verts = [(origin), (pos_lights[2][0], pos_lights[2][1], pos_lights[2][2])]
+            edges = [(0, 1)]
+            ray_light = bpy.data.meshes.new('ray')
+            ray_light.from_pydata(verts, edges, [])
+            ray_light.update()
+            mesh_obj = bpy.data.objects.new('obj_', ray_light)
+            lights.objects.link(mesh_obj)
+
+            point = []
+
+            for k in px_plane_coord.keys():
                 # print(px_plane_coord[k])
-                for i in range(len(px_plane_coord[k])):
-                    # print(px_plane_coord[k][i])
-                    # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
-                    # check z coordinate bottom and up boundary
-                    if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
-                        if img_name == 'img13':
-                            # check y coordinate left and right boundary
-                            if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
-                                # append name of img the active pixel belongs to
-                                active_check.append(k)
-                        else:
-                            if point[0] < px_plane_coord[k][i][1][0] and point[1] >= px_plane_coord[k][i][0][0]:
-                                active_check.append(k)
-        # check that ray intersect valid pixels of all images, if not set invalid to false and go to next cube ray
-        if len(active_check) != 0:
-            print(active_check)
-            for e in img_names:
-                if e not in active_check:
-                    invalid = True
-                    break
-            if invalid:
-                continue
-            # else:
-                # print('hi')
-                # create activ voxel
+                # random point on plane to get point of intersection if any
+                ref_px = px_plane_coord[k][0][0]
+                # print(ref_px)
+                # get normal of plane knowing the name of the image depending on its orientation
+                normal = []
+                if k == 'img1': 
+                    # image on positive x axis
+                    normal = [1,0,0]
+                elif k == 'img2':
+                    #image on negative y axis
+                    normal = [0,1,0]
+                elif k == 'img3':
+                    #image on negative y axis
+                    normal = [-1,0,0]
+                else:
+                    normal = [0,-1,0]
+                # check if voxel ray intersect image 
+                # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
+                dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
+                if dot > epsilon:
+                    # find point of intersection
+                    # difference between point on plane and origin of ray
+                    w = [origin[0] - ref_px[0] , origin[1] - ref_px[1], origin[2] - ref_px[2]]
+                    fac = - dot_v3v3(normal,w)/dot
+                    u = mul_v3_fl(ray,fac)
+                    point = add_v3v3(origin, u)
+                    print(k)
+                    print(origin)
+                    print(point)
+                    print('\n')
+
+                    # check if intersection of ray with correct image -> bound coordinates
+                    # if (point[0] > 40 or point[1] > 40 or point[2] > 40):
+
+
+                    # check in which pixel the intersection point is, set one value True for the cube if active pixel
+                    for i in range(len(px_plane_coord[k])):
+                        # print(px_plane_coord[k][i])
+                        # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
+                        # check z coordinate bottom and up boundary
+                        if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
+                            if k == 'img1' or k == 'img3':
+                                # check y coordinate left and right boundary
+                                if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
+                                    # append name of img the active pixel belongs to
+                                    active_check.append(k)
+                            else:
+                                if point[0] < px_plane_coord[k][i][1][0] and point[1] >= px_plane_coord[k][i][0][0]:
+                                    active_check.append(k)
+
+
+
+        if (counter % 3 == 0):
+            # check that ray intersect valid pixels of all images, if not set invalid to false and go to next cube ray
+            if 'img1' in active_check and 'img2' in active_check and 'img3' in active_check:
+                print(active_check)
+                print('\n')
+            # if len(active_check) != 0:
+            #     # print(active_check)
+            #     for e in img_names:
+            #         if e not in active_check:
+            #             invalid = True
+            #             break
+            #     if invalid:
+            #         continue
+                # else:
+                    # print('hi')
+                    # create activ voxel
 
 
 
 
 
                                 
+def dot_v3v3(v0, v1):
+    return (
+        (v0[0] * v1[0]) +
+        (v0[1] * v1[1]) +
+        (v0[2] * v1[2])
+    )
 
 
 
+def mul_v3_fl(v0, f):
+    return (
+        v0[0] * f,
+        v0[1] * f,
+        v0[2] * f,
+    )
 
-
-
-
-
-
-                
+def add_v3v3(v0, v1):
+    return (
+        v0[0] + v1[0],
+        v0[1] + v1[1],
+        v0[2] + v1[2],
+    )                
 
 
             
