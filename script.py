@@ -350,7 +350,6 @@ def active_voxels(epsilon=1e-6):
             if invalid:
                 continue
             else:
-            # else:
                 bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
 
 
