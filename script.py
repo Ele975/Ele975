@@ -238,6 +238,9 @@ def active_voxels(epsilon=1e-6):
     nr_rays_per_voxel = nr_img
     counter = 0
     active_check = []
+    
+    
+
     for i in range(len(cubes_ray)):
         # more same ray origin because more rays per voxel, then check if active voxel when all its rays intersect active pixels (nr rays = nr imgs))
         counter += 1
@@ -350,9 +353,62 @@ def active_voxels(epsilon=1e-6):
             if invalid:
                 continue
             else:
-                bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
+                active_cubes.append(origin)
+
+                # if j%100 == 0:
+
+                    # bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
+
+    bpy.data.collections.new('voxels')
+
+    for idx, location in enumerate(active_cubes):
+        vox = bpy.data.meshes.new(f'result ${idx}')
+        print(location)
+        vox.from_pydata(
+            [
+            [location[0]-0.5,location[1]-0.5, location[2]+0.5],
+            [location[0]+0.5,location[1]-0.5, location[2]+0.5],
+            [location[0]+0.5,location[1]-0.5, location[2]-0.5],
+            [location[0]-0.5,location[1]-0.5, location[2]-0.5],
+            [location[0]-0.5,location[1]+0.5, location[2]+0.5],
+            [location[0]+0.5,location[1]+0.5, location[2]+0.5],
+            [location[0]+0.5,location[1]+0.5, location[2]-0.5],
+            [location[0]-0.5,location[1]+0.5, location[2]-0.5],
+            
+            ], [
+                [0,1],
+                [1,2],
+                [2,3],
+                [3,0],
+                [4,5],
+                [5,6],
+                [6,7],
+                [0,4],
+                [1,5],
+                [2,6],
+                [3,7],
+                [4,7],
 
 
+            ], [
+                [0,1,2,3],
+                [0,4,5,1],
+                [1,2,6,5],
+                [7,3,2,6],
+                [4,5,6,7],
+                [0,4,7,3],
+
+            ])
+        vox.validate()
+        vox.update()
+        container = bpy.data.objects.new("result", vox)
+        
+        for collection in bpy.data.collections:
+            if collection.name == 'voxels':
+                bpy.data.collections[collection.name].objects.link(container)
+                break
+
+        break
 
 
 
@@ -479,6 +535,6 @@ cubes_ray = []
 hull_space()
 
 # cubes which rays passes through active pixels for each image
-active_cubes = {}
+active_cubes = []
 
 active_voxels()
