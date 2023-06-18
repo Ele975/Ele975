@@ -361,9 +361,10 @@ def active_voxels(epsilon=1e-6):
 
     bpy.data.collections.new('voxels')
 
+    bm = bmesh.new()
     for idx, location in enumerate(active_cubes):
         new_mesh = bpy.data.meshes.new(f'result ${idx}')
-        print(location)
+        # print(location)
         new_mesh.from_pydata(
             [
             [location[0]-0.5,location[1]-0.5, location[2]+0.5],
@@ -401,15 +402,16 @@ def active_voxels(epsilon=1e-6):
             ])
         new_mesh.validate()
         new_mesh.update()
-        theObj = bpy.data.objects.new("result", new_mesh)
-        # bpy.context.scene.objects.link(theObj)
-        for collection in bpy.data.collections:
-            print(collection.name)
-            bpy.data.collections[collection.name].objects.link(theObj)
-            break
+        bm.from_mesh(new_mesh)
 
+    m3 = bpy.data.meshes.new('nmesh')
+    bm.to_mesh(m3)
+    theObj = bpy.data.objects.new("result", m3)
+    # bpy.context.scene.objects.link(theObj)
+    for collection in bpy.data.collections:
+        print(collection.name)
+        bpy.data.collections[collection.name].objects.link(theObj)
         break
-
 
 
 
