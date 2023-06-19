@@ -155,11 +155,6 @@ def create_img(img_name, img, dic, rot_y):
     # if no active pixel found in the current image, remove image from dictionary px_plane_coord because empty value
     if empty:
         px_plane_coord.pop(img_name)
-    # print(px_plane_coord)
-
-
-
-
 
 
 
@@ -217,9 +212,6 @@ def increase_line_length(start_point, end_point, length_increase):
 # fins total hull square space in the middle of all images
 def hull_space():
     # hull space of 20x20x60 (to be sure because of projection) -> used to visualise entire hull space
-    # loc=[0,0,5]
-    # bpy.ops.mesh.primitive_cube_add(size=20.0, location= loc)
-
     # voxels of size 1
     for i in range(20): 
         for j in range(20):
@@ -250,46 +242,6 @@ def active_voxels(epsilon=1e-6):
         ray = [cubes_ray[i][3],cubes_ray[i][4],cubes_ray[i][5]]
         # cube ray doesn't intesect all valid pixels in all images
         invalid = False
-
-
-
-        # if origin[0] == -3 and origin[1] == -2 and origin[2] == 7:
-            
-            # bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
-
-
-            # verts = [(origin), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
-            # edges = [(0, 1)]
-            # ray_light = bpy.data.meshes.new('ray')
-            # ray_light.from_pydata(verts, edges, [])
-            # ray_light.update()
-            # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-            # lights.objects.link(mesh_obj)
-
-            # verts = [(origin), (pos_lights[1][0], pos_lights[1][1], pos_lights[1][2])]
-            # edges = [(0, 1)]
-            # ray_light = bpy.data.meshes.new('ray')
-            # ray_light.from_pydata(verts, edges, [])
-            # ray_light.update()
-            # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-            # lights.objects.link(mesh_obj)
-
-            # verts = [(origin), (pos_lights[2][0], pos_lights[2][1], pos_lights[2][2])]
-            # edges = [(0, 1)]
-            # ray_light = bpy.data.meshes.new('ray')
-            # ray_light.from_pydata(verts, edges, [])
-            # ray_light.update()
-            # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-            # lights.objects.link(mesh_obj)
-
-            # verts = [(origin), (pos_lights[3][0], pos_lights[3][1], pos_lights[3][2])]
-            # edges = [(0, 1)]
-            # ray_light = bpy.data.meshes.new('ray')
-            # ray_light.from_pydata(verts, edges, [])
-            # ray_light.update()
-            # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-            # lights.objects.link(mesh_obj)
-
         point = []
 
         for k in px_plane_coord.keys():
@@ -319,11 +271,6 @@ def active_voxels(epsilon=1e-6):
                 u = mul_v3_fl(ray,fac)
                 point = add_v3v3(origin, u)
 
-
-                # check if intersection of ray with correct image -> bound coordinates
-                # if (point[0] > 40 or point[1] > 40 or point[2] > 40):
-
-
                 # check in which pixel the intersection point is, set one value True for the cube if active pixel
                 for i in range(len(px_plane_coord[k])):
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
@@ -333,17 +280,9 @@ def active_voxels(epsilon=1e-6):
                         if k == 'img1':
                             if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
                                 active_check.append(k)
-                                # if origin[0] >= 9 and origin[2] >= 10:
-                                    # print("ENTERED \n")
-                                    # print(origin)
-                                    # print(point)
-                                    # print(px_plane_coord[k][i])
-                                    # print('\n')
                         elif k == 'img3':
                             if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
                                 active_check.append(k)
-                                # if origin[0] == 8 and origin[1] == -4 and origin[2] == -4:
-                                #     print(point)
                         elif k == 'img2':
                             if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
                                 active_check.append(k)
@@ -384,17 +323,10 @@ def active_voxels(epsilon=1e-6):
 
             active_check = []
 
-                # if j%100 == 0:
-
-                    # bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
-
     bpy.data.collections.new('voxels')
-    # print(active_cubes)
     bm = bmesh.new()
-    # print(active_cubes)
     for idx, location in enumerate(active_cubes):
         new_mesh = bpy.data.meshes.new(f'result ${idx}')
-        # print(location)
         new_mesh.from_pydata(
             [
             [location[0]-0.5,location[1]-0.5, location[2]+0.5],
@@ -437,41 +369,20 @@ def active_voxels(epsilon=1e-6):
     m3 = bpy.data.meshes.new('nmesh')
     bm.to_mesh(m3)
     theObj = bpy.data.objects.new("result", m3)
-    # bpy.context.scene.objects.link(theObj)
     for collection in bpy.data.collections:
         print(collection.name)
         bpy.data.collections[collection.name].objects.link(theObj)
         break
 
-
-
-
-
-
-
-                                
+                             
 def dot_v3v3(v0, v1):
-    return (
-        (v0[0] * v1[0]) +
-        (v0[1] * v1[1]) +
-        (v0[2] * v1[2])
-    )
-
-
+    return ((v0[0] * v1[0]) + (v0[1] * v1[1]) + (v0[2] * v1[2]))
 
 def mul_v3_fl(v0, f):
-    return (
-        v0[0] * f,
-        v0[1] * f,
-        v0[2] * f,
-    )
+    return (v0[0] * f, v0[1] * f, v0[2] * f)
 
 def add_v3v3(v0, v1):
-    return (
-        v0[0] + v1[0],
-        v0[1] + v1[1],
-        v0[2] + v1[2],
-    )                
+    return (v0[0] + v1[0], v0[1] + v1[1], v0[2] + v1[2])                
 
 
             
@@ -502,7 +413,7 @@ img2 = [[0 for i in range(img_size)] for j in range(img_size)]
 img3 = [[0 for i in range(img_size)] for j in range(img_size)]
 img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
-#square NEED TO CHANGE
+#square NEED TO CHANGE -> PASS AS PARAMETER
 for i in range(img_size):
     for j in range(img_size):
         img4[i][j] = 1
@@ -512,12 +423,6 @@ for i in range(img_size):
                 img2[i][j] = 1
                 img3[i][j] = 1
                 img4[i][j] = 1
-        # if i >= 4 and i < 7:
-        #     if (j >= 2 and j < 8):
-        #         img2[i][j] = 1
-        # if i >= 1 and i < 4:
-        #     if (j >= 2 and j < 8):
-        #         img3[i][j] = 1
                 
 
 
