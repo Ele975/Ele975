@@ -364,7 +364,7 @@ def active_voxels(epsilon=1e-6):
                 active_cubes.append(origin)
 
 
-                
+
                 # verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
                 # edges = [(0, 1)]
                 # ray_light = bpy.data.meshes.new('ray')
@@ -505,20 +505,21 @@ img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 #square NEED TO CHANGE
 for i in range(img_size):
     for j in range(img_size):
-        # img2[i][j] = 1
-        # img2[i][j] = 1
-        # if i >= 2 and i < 8:
-        #     if j >= 2 and j < 8:
-        # #         img1[i][j] = 1
+        img4[i][j] = 1
+        if i >= 2 and i < 8:
+            if j >= 2 and j < 8:
+                img1[i][j] = 1
+                img2[i][j] = 1
+                img3[i][j] = 1
+                img4[i][j] = 1
+        # if i >= 4 and i < 7:
+        #     if (j >= 2 and j < 8):
         #         img2[i][j] = 1
-        if i == 0:
-            img1[i][j] = 1
-            img2[i][j] = 1
-            img3[i][j] = 1
-            img4[i][j] = 1
-        # img2[i][j] = 1
-        # img3[i][j] = 1
-        # img4[i][j] = 1
+        # if i >= 1 and i < 4:
+        #     if (j >= 2 and j < 8):
+        #         img3[i][j] = 1
+                
+
 
 
 # coordinates of all lights depending on angle
@@ -551,8 +552,8 @@ px_plane_coord = {}
 #     create_img(e, )
 create_img('img1',img1,dic_img1, math.radians(90))
 create_img('img2',img2,dic_img2,  math.radians(90))
-# create_img('img3',img3,dic_img3,  math.radians(90))
-# create_img('img4',img4,dic_img4,  math.radians(90))
+create_img('img3',img3,dic_img3,  math.radians(90))
+create_img('img4',img4,dic_img4,  math.radians(90))
 
 for i in range(len(angles)):
     create_light(pos_lights[i])
@@ -563,8 +564,8 @@ corners_coord = []
 
 ray_light('img1', dic_img1, pos_lights[0], corners_coord)
 ray_light('img2',dic_img2, pos_lights[1], corners_coord)
-# ray_light('img3',dic_img3, pos_lights[2], corners_coord)
-# ray_light('img4',dic_img4, pos_lights[3], corners_coord)
+ray_light('img3',dic_img3, pos_lights[2], corners_coord)
+ray_light('img4',dic_img4, pos_lights[3], corners_coord)
 
 # coordinates of voxels
 # for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
