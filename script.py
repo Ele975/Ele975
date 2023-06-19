@@ -155,7 +155,7 @@ def create_img(img_name, img, dic, rot_y):
     # if no active pixel found in the current image, remove image from dictionary px_plane_coord because empty value
     if empty:
         px_plane_coord.pop(img_name)
-    print(px_plane_coord)
+    # print(px_plane_coord)
 
 
 
@@ -181,16 +181,16 @@ def ray_light(name, dic, pos_light, corners):
 
             # create lines from the light point to the center of each pixel. Increase then the length of the lines to know the space
             # to build the hull
-            for i in range(len(end_coords)):
-                end_point =increase_line_length(init_coord, end_coords[i],30)
-                info.append(end_point)
-                verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
-                edges = [(0, 1)]
-                ray_light = bpy.data.meshes.new('ray' + str(name))
-                ray_light.from_pydata(verts, edges, [])
-                ray_light.update()
-                mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
-                lights.objects.link(mesh_obj)
+            # for i in range(len(end_coords)):
+            #     end_point =increase_line_length(init_coord, end_coords[i],30)
+            #     info.append(end_point)
+            #     verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
+            #     edges = [(0, 1)]
+            #     ray_light = bpy.data.meshes.new('ray' + str(name))
+            #     ray_light.from_pydata(verts, edges, [])
+            #     ray_light.update()
+            #     mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
+            #     lights.objects.link(mesh_obj)
 
             corners.append(info)
 
@@ -225,8 +225,6 @@ def hull_space():
         for j in range(20):
             for k in range(20):
                 loc = [10-i, 10-j, k-5]
-                # if (loc[2] == 10 and loc[0] == 9):
-                #     print(loc)
                 # for each voxel create ray from voxel center to each light center
                 for l in range(len(pos_lights)):
                     ray = [loc[0], loc[1], loc[2], pos_lights[l][0] - loc[0], pos_lights[l][1] - loc[1], pos_lights[l][2] - loc[2]]
@@ -295,10 +293,8 @@ def active_voxels(epsilon=1e-6):
         point = []
 
         for k in px_plane_coord.keys():
-            # print(px_plane_coord[k])
             # random point on plane to get point of intersection if any
             ref_px = px_plane_coord[k][0][0]
-            # print(ref_px)
             # get normal of plane knowing the name of the image depending on its orientation
             normal = []
             if k == 'img1': 
@@ -330,7 +326,6 @@ def active_voxels(epsilon=1e-6):
 
                 # check in which pixel the intersection point is, set one value True for the cube if active pixel
                 for i in range(len(px_plane_coord[k])):
-                    # print(px_plane_coord[k][i])
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
@@ -338,15 +333,17 @@ def active_voxels(epsilon=1e-6):
                         if k == 'img1':
                             if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
                                 active_check.append(k)
-                                if origin[0] >= 9 and origin[2] >= 10:
-                                    print("ENTERED \n")
-                                    print(origin)
-                                    print(point)
-                                    print(px_plane_coord[k][i])
-                                    print('\n')
+                                # if origin[0] >= 9 and origin[2] >= 10:
+                                    # print("ENTERED \n")
+                                    # print(origin)
+                                    # print(point)
+                                    # print(px_plane_coord[k][i])
+                                    # print('\n')
                         elif k == 'img3':
                             if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
                                 active_check.append(k)
+                                # if origin[0] == 8 and origin[1] == -4 and origin[2] == -4:
+                                #     print(point)
                         elif k == 'img2':
                             if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
                                 active_check.append(k)
@@ -355,18 +352,35 @@ def active_voxels(epsilon=1e-6):
                                 active_check.append(k)
 
         # check that all rays (depending on the number of imgs) of each voxel intersect active pixels. If yes, make them active (create them)
-        if origin[0] >= 9 and origin[2] >= 10:
-            print('entered')
         if counter % nr_img == 0:
             for e in img_names:
                 if e not in active_check:
                     invalid = True
                     break
             if invalid:
+                active_check = []
                 continue
             else:
-                active_cubes.append(origin)
-        active_check = []
+                # active_cubes.append(origin)
+                # verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
+                # edges = [(0, 1)]
+                # ray_light = bpy.data.meshes.new('ray')
+                # ray_light.from_pydata(verts, edges, [])
+                # ray_light.update()
+                # mesh_obj = bpy.data.objects.new('obj_', ray_light)
+                # lights.objects.link(mesh_obj)
+
+                # verts = [(origin[0], origin[1], origin[2]), ([0,50,4])]
+                # edges = [(0, 1)]
+                # ray_light = bpy.data.meshes.new('ray')
+                # ray_light.from_pydata(verts, edges, [])
+                # ray_light.update()
+                # mesh_obj = bpy.data.objects.new('obj_', ray_light)
+                # lights.objects.link(mesh_obj)
+
+
+            active_check = []
+
                 # if j%100 == 0:
 
                     # bpy.ops.mesh.primitive_cube_add(size=1.0, location= origin)
@@ -374,6 +388,7 @@ def active_voxels(epsilon=1e-6):
     bpy.data.collections.new('voxels')
     # print(active_cubes)
     bm = bmesh.new()
+    # print(active_cubes)
     for idx, location in enumerate(active_cubes):
         new_mesh = bpy.data.meshes.new(f'result ${idx}')
         # print(location)
@@ -480,16 +495,18 @@ bpy.context.scene.collection.children.link(lights)
 # pixel input images -> example
 img_size = 9
 img1 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img2 = [[0 for i in range(img_size)] for j in range(img_size)]
+img2 = [[0 for i in range(img_size)] for j in range(img_size)]
 # img3 = [[0 for i in range(img_size)] for j in range(img_size)]
 # img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
 #square NEED TO CHANGE
 for i in range(img_size):
     for j in range(img_size):
+        img2[i][j] = 1
+        img2[i][j] = 1
         # if i >= 2 and i < 8:
         #     if j >= 2 and j < 8:
-        #         img1[i][j] = 1
+        # #         img1[i][j] = 1
         #         img2[i][j] = 1
         if i == 0 and j == 0:
             img1[i][j] = 1
@@ -527,7 +544,7 @@ px_plane_coord = {}
 # for e in img_names:
 #     create_img(e, )
 create_img('img1',img1,dic_img1, math.radians(90))
-# create_img('img2',img2,dic_img2,  math.radians(90))
+create_img('img2',img2,dic_img2,  math.radians(90))
 # create_img('img3',img3,dic_img3,  math.radians(90))
 # create_img('img4',img4,dic_img4,  math.radians(90))
 
@@ -539,7 +556,7 @@ for i in range(len(angles)):
 corners_coord = []
 
 ray_light('img1', dic_img1, pos_lights[0], corners_coord)
-# ray_light('img2',dic_img2, pos_lights[1], corners_coord)
+ray_light('img2',dic_img2, pos_lights[1], corners_coord)
 # ray_light('img3',dic_img3, pos_lights[2], corners_coord)
 # ray_light('img4',dic_img4, pos_lights[3], corners_coord)
 
