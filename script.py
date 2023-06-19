@@ -361,7 +361,10 @@ def active_voxels(epsilon=1e-6):
                 active_check = []
                 continue
             else:
-                # active_cubes.append(origin)
+                active_cubes.append(origin)
+
+
+                
                 # verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
                 # edges = [(0, 1)]
                 # ray_light = bpy.data.meshes.new('ray')
@@ -496,20 +499,23 @@ bpy.context.scene.collection.children.link(lights)
 img_size = 9
 img1 = [[0 for i in range(img_size)] for j in range(img_size)]
 img2 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img4 = [[0 for i in range(img_size)] for j in range(img_size)]
+img3 = [[0 for i in range(img_size)] for j in range(img_size)]
+img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
 #square NEED TO CHANGE
 for i in range(img_size):
     for j in range(img_size):
-        img2[i][j] = 1
-        img2[i][j] = 1
+        # img2[i][j] = 1
+        # img2[i][j] = 1
         # if i >= 2 and i < 8:
         #     if j >= 2 and j < 8:
         # #         img1[i][j] = 1
         #         img2[i][j] = 1
-        if i == 0 and j == 0:
+        if i == 0:
             img1[i][j] = 1
+            img2[i][j] = 1
+            img3[i][j] = 1
+            img4[i][j] = 1
         # img2[i][j] = 1
         # img3[i][j] = 1
         # img4[i][j] = 1
