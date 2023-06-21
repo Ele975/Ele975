@@ -435,7 +435,25 @@ def add_v3v3(v0, v1):
 # --------------OPTIMISATION--------------
 
             
-def empty_voxels():
+def find_empty_voxels():
+    for k in inconsistent_pixels.keys():
+        # center and corners inconsistent pixel 
+        for v in range(len(inconsistent_pixels[k])):
+            # find corners of inconsistent pixel from px_plane_coord by finding corresponding center
+            info = None
+
+            for k2 in px_plane_coord.keys():
+                for i in range(len(px_plane_coord[k2])):
+                    if px_plane_coord[k2][i][0][0] == inconsistent_pixels[k][v][0] and px_plane_coord[k2][i][0][1] == inconsistent_pixels[k][v][1] and px_plane_coord[k2][i][0][2] == inconsistent_pixels[k][v][2]:
+                        info = px_plane_coord[k2][i]
+            
+            # find ray of voxel which intersect inconsistent pixel and save voxel in empty_voxels
+
+            print(info)
+
+    # print(info)
+
+
 
 
 
@@ -545,4 +563,5 @@ active_voxels()
 print(inconsistent_pixels)
 
 # line of empty voxels with corresponding cost for each inconsistent pixel
-empty voxels = {}
+empty_voxels = {}
+find_empty_voxels()
