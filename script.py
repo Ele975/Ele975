@@ -94,38 +94,38 @@ def create_img(img_name, img, dic, rot_y):
                 if (img[i][j] == 1):
                     empty = False
                     #upper left
-                    temp.append([loc[0]-0.5, loc[1], loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]-0.5, loc[1], loc[2]+0.5])
                     #upper right
-                    temp.append([loc[0]+0.5, loc[1], loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]+0.5, loc[1], loc[2]+0.5])
                     #bottom left
-                    temp.append([loc[0]-0.5, loc[1], loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]-0.5, loc[1], loc[2]-0.5])
                     #bottom right
-                    temp.append([loc[0]+0.5, loc[1], loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]+0.5, loc[1], loc[2]-0.5])
 
             elif img_name == 'img1':
                 loc = [20,j-4,i]
                 if (img[i][j] == 1):
                     empty = False
                     #upper left
-                    temp.append([loc[0], loc[1]-0.5, loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]-0.5, loc[2]+0.5])
                     #upper right
-                    temp.append([loc[0], loc[1]+0.5, loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]+0.5, loc[2]+0.5])
                     #bottom left
-                    temp.append([loc[0], loc[1]-0.5, loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]-0.5, loc[2]-0.5])
                     #bottom right
-                    temp.append([loc[0], loc[1]+0.5, loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]+0.5, loc[2]-0.5])
             else:
                 loc = [j-4,20,i]
                 if (img[i][j] == 1):
                     empty = False
                     #upper left
-                    temp.append([loc[0]+0.5, loc[1], loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]+0.5, loc[1], loc[2]+0.5])
                     #upper right
-                    temp.append([loc[0]-0.5, loc[1], loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]-0.5, loc[1], loc[2]+0.5])
                     #bottom left
-                    temp.append([loc[0]+0.5, loc[1], loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]+0.5, loc[1], loc[2]-0.5])
                     #bottom right
-                    temp.append([loc[0]-0.5, loc[1], loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0]-0.5, loc[1], loc[2]-0.5])
             #if active pixel, insert in px_plane_coord corner coordinates of pixels
             if (len(temp) > 0):
                 px_plane_coord[img_name].append(temp)
@@ -176,16 +176,16 @@ def ray_light(name, dic, pos_light, corners):
 
             # create lines from the light point to the center of each pixel. Increase then the length of the lines to know the space
             # to build the hull
-            # for i in range(len(end_coords)):
-            #     end_point =increase_line_length(init_coord, end_coords[i],30)
-            #     info.append(end_point)
-            #     verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
-            #     edges = [(0, 1)]
-            #     ray_light = bpy.data.meshes.new('ray' + str(name))
-            #     ray_light.from_pydata(verts, edges, [])
-            #     ray_light.update()
-            #     mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
-            #     lights.objects.link(mesh_obj)
+            for i in range(len(end_coords)):
+                end_point =increase_line_length(init_coord, end_coords[i],30)
+                info.append(end_point)
+                # verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
+                # edges = [(0, 1)]
+                # ray_light = bpy.data.meshes.new('ray' + str(name))
+                # ray_light.from_pydata(verts, edges, [])
+                # ray_light.update()
+                # mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
+                # lights.objects.link(mesh_obj)
 
             corners.append(info)
 
@@ -209,9 +209,11 @@ def increase_line_length(start_point, end_point, length_increase):
     return new_end_point
 
 
-# fins total hull square space in the middle of all images
+# find total hull square space in the middle of all images
 def hull_space():
     # hull space of 20x20x60 (to be sure because of projection) -> used to visualise entire hull space
+    # loc=[0,0,5]
+    # bpy.ops.mesh.primitive_cube_add(size=20.0, location= loc)
     # voxels of size 1
     for i in range(20): 
         for j in range(20):
@@ -231,9 +233,8 @@ def hull_space():
 def active_voxels(epsilon=1e-6):
     nr_rays_per_voxel = nr_img
     counter = 0
+    intersection = False
     active_check = []
-    
-    
 
     for i in range(len(cubes_ray)):
         # more same ray origin because more rays per voxel, then check if active voxel when all its rays intersect active pixels (nr rays = nr imgs))
@@ -245,8 +246,8 @@ def active_voxels(epsilon=1e-6):
         point = []
 
         for k in px_plane_coord.keys():
-            # random point on plane to get point of intersection if any
-            ref_px = px_plane_coord[k][0][0]
+            # random point on plane to get point of intersection if any -> corner point
+            ref_px = [px_plane_coord[k][0][0][3],px_plane_coord[k][0][0][4],px_plane_coord[k][0][0][5]]
             # get normal of plane knowing the name of the image depending on its orientation
             normal = []
             if k == 'img1': 
@@ -263,6 +264,7 @@ def active_voxels(epsilon=1e-6):
             # check if voxel ray intersect image 
             # dot product between plane normal and ray cube, intersect if > epsilon, otherwise they're parallel
             dot = (ray[0] * normal[0]) +(ray[1] * normal[1]) + (ray[2] * normal[2])
+
             if dot > epsilon:
                 # find point of intersection
                 # difference between point on plane and origin of ray
@@ -275,20 +277,29 @@ def active_voxels(epsilon=1e-6):
                 for i in range(len(px_plane_coord[k])):
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
-                    if point[2] < px_plane_coord[k][i][0][2] and point[2] >= px_plane_coord[k][i][2][2]:
+                    if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
                         # check y coordinates for img1 and img3 and x coordinates for img2 and img4. Append if intersection found
                         if k == 'img1':
-                            if point[1] < px_plane_coord[k][i][1][1] and point[1] >= px_plane_coord[k][i][0][1]:
+                            if point[1] < px_plane_coord[k][i][1][4] and point[1] >= px_plane_coord[k][i][0][4]:
                                 active_check.append(k)
+                                #save center of pixel as temporary inconsistent, remove later if not
+                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                                inconsistent_pixels[k].append(px_plane_coord[k][i])
                         elif k == 'img3':
-                            if point[1] >= px_plane_coord[k][i][1][1] and point[1] < px_plane_coord[k][i][0][1]:
+                            if point[1] >= px_plane_coord[k][i][1][4] and point[1] < px_plane_coord[k][i][0][4]:
                                 active_check.append(k)
+                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                                inconsistent_pixels[k].append(px_plane_coord[k][i])
                         elif k == 'img2':
-                            if point[0] < px_plane_coord[k][i][0][0] and point[0] >= px_plane_coord[k][i][1][0]:
+                            if point[0] < px_plane_coord[k][i][0][3] and point[0] >= px_plane_coord[k][i][1][3]:
                                 active_check.append(k)
+                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                                inconsistent_pixels[k].append(px_plane_coord[k][i])
                         else:
-                            if point[0] >= px_plane_coord[k][i][0][0] and point[0] < px_plane_coord[k][i][1][0]:
+                            if point[0] >= px_plane_coord[k][i][0][3] and point[0] < px_plane_coord[k][i][1][3]:
                                 active_check.append(k)
+                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                                inconsistent_pixels[k].append(px_plane_coord[k][i])
 
         # check that all rays (depending on the number of imgs) of each voxel intersect active pixels. If yes, make them active (create them)
         if counter % nr_img == 0:
@@ -303,22 +314,21 @@ def active_voxels(epsilon=1e-6):
                 active_cubes.append(origin)
 
 
+                verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
+                edges = [(0, 1)]
+                ray_light = bpy.data.meshes.new('ray')
+                ray_light.from_pydata(verts, edges, [])
+                ray_light.update()
+                mesh_obj = bpy.data.objects.new('obj_', ray_light)
+                lights.objects.link(mesh_obj)
 
-                # verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
-                # edges = [(0, 1)]
-                # ray_light = bpy.data.meshes.new('ray')
-                # ray_light.from_pydata(verts, edges, [])
-                # ray_light.update()
-                # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-                # lights.objects.link(mesh_obj)
-
-                # verts = [(origin[0], origin[1], origin[2]), ([0,50,4])]
-                # edges = [(0, 1)]
-                # ray_light = bpy.data.meshes.new('ray')
-                # ray_light.from_pydata(verts, edges, [])
-                # ray_light.update()
-                # mesh_obj = bpy.data.objects.new('obj_', ray_light)
-                # lights.objects.link(mesh_obj)
+                verts = [(origin[0], origin[1], origin[2]), ([0,50,4])]
+                edges = [(0, 1)]
+                ray_light = bpy.data.meshes.new('ray')
+                ray_light.from_pydata(verts, edges, [])
+                ray_light.update()
+                mesh_obj = bpy.data.objects.new('obj_', ray_light)
+                lights.objects.link(mesh_obj)
 
 
             active_check = []
@@ -387,6 +397,7 @@ def add_v3v3(v0, v1):
 
             
             
+# PART 2 ---- OPTIMISATION
 
             
 
@@ -410,19 +421,19 @@ bpy.context.scene.collection.children.link(lights)
 img_size = 9
 img1 = [[0 for i in range(img_size)] for j in range(img_size)]
 img2 = [[0 for i in range(img_size)] for j in range(img_size)]
-img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-img4 = [[0 for i in range(img_size)] for j in range(img_size)]
+# img3 = [[0 for i in range(img_size)] for j in range(img_size)]
+# img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
 #square NEED TO CHANGE -> PASS AS PARAMETER
 for i in range(img_size):
     for j in range(img_size):
-        img4[i][j] = 1
+        # img4[i][j] = 1
         if i >= 2 and i < 8:
             if j >= 2 and j < 8:
                 img1[i][j] = 1
                 img2[i][j] = 1
-                img3[i][j] = 1
-                img4[i][j] = 1
+                # img3[i][j] = 1
+                # img4[i][j] = 1
                 
 
 
@@ -449,7 +460,10 @@ dic_img2 = {}
 dic_img3 = {}
 dic_img4 = {}
 
-# using img name as key, contains all corners coordinates of each pixel of each img
+# using img name as key
+# structure -> img1 : [[param1,param2,param3,param4], [parm1,param2,param3,param4]...]
+# where param -> [p1,p2,p3,p4,p5,p6]
+# where p's: 3 first parameters are the coordinates of the pixel center, last 3 parameters are corners coordinates of the pixel (then pixel center repeated for all corners)
 px_plane_coord = {}
 # for i in range(nr_img):
 
@@ -457,8 +471,8 @@ px_plane_coord = {}
 #     create_img(e, )
 create_img('img1',img1,dic_img1, math.radians(90))
 create_img('img2',img2,dic_img2,  math.radians(90))
-create_img('img3',img3,dic_img3,  math.radians(90))
-create_img('img4',img4,dic_img4,  math.radians(90))
+# create_img('img3',img3,dic_img3,  math.radians(90))
+# create_img('img4',img4,dic_img4,  math.radians(90))
 
 for i in range(len(angles)):
     create_light(pos_lights[i])
@@ -469,8 +483,8 @@ corners_coord = []
 
 ray_light('img1', dic_img1, pos_lights[0], corners_coord)
 ray_light('img2',dic_img2, pos_lights[1], corners_coord)
-ray_light('img3',dic_img3, pos_lights[2], corners_coord)
-ray_light('img4',dic_img4, pos_lights[3], corners_coord)
+# ray_light('img3',dic_img3, pos_lights[2], corners_coord)
+# ray_light('img4',dic_img4, pos_lights[3], corners_coord)
 
 # coordinates of voxels
 # for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
@@ -480,5 +494,9 @@ hull_space()
 
 # cubes which rays passes through active pixels for each image
 active_cubes = []
+# set of incosistent pixels -> active pixels in the images but empty in the corresponding shadow (= the voxel cannot be created because its ray doesn't intersect an active pixel one/more other image/s)
+inconsistent_pixels = {}
+for e in img_names:
+    inconsistent_pixels[e] = []
 
 active_voxels()
