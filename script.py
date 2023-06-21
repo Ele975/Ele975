@@ -281,25 +281,23 @@ def active_voxels(epsilon=1e-6):
                         # check y coordinates for img1 and img3 and x coordinates for img2 and img4. Append if intersection found
                         if k == 'img1':
                             if point[1] < px_plane_coord[k][i][1][4] and point[1] >= px_plane_coord[k][i][0][4]:
-                                active_check.append(k)
-                                #save center of pixel as temporary inconsistent, remove later if not
-                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
-                                inconsistent_pixels[k].append(px_plane_coord[k][i])
+                                intersection = True
                         elif k == 'img3':
                             if point[1] >= px_plane_coord[k][i][1][4] and point[1] < px_plane_coord[k][i][0][4]:
-                                active_check.append(k)
-                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
-                                inconsistent_pixels[k].append(px_plane_coord[k][i])
+                                intersection = True
                         elif k == 'img2':
                             if point[0] < px_plane_coord[k][i][0][3] and point[0] >= px_plane_coord[k][i][1][3]:
-                                active_check.append(k)
-                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
-                                inconsistent_pixels[k].append(px_plane_coord[k][i])
+                                intersection = True
                         else:
                             if point[0] >= px_plane_coord[k][i][0][3] and point[0] < px_plane_coord[k][i][1][3]:
-                                active_check.append(k)
-                                center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
-                                inconsistent_pixels[k].append(px_plane_coord[k][i])
+                                intersection = True
+
+                    if intersection:
+                        active_check.append(k)
+                        #save center of pixel as temporary inconsistent, remove later if not
+                        center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                        inconsistent_pixels[k].append(px_plane_coord[k][i])
+                    intersection = False
 
         # check that all rays (depending on the number of imgs) of each voxel intersect active pixels. If yes, make them active (create them)
         if counter % nr_img == 0:
