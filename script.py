@@ -219,6 +219,7 @@ def hull_space():
     for i in range(20): 
         for j in range(20):
             for k in range(20):
+                #center of cubes
                 loc = [10-i, 10-j, k-5]
                 # for each voxel create ray from voxel center to each light center
                 for l in range(len(pos_lights)):
@@ -245,15 +246,15 @@ def active_voxels(epsilon=1e-6):
     for i in range(len(cubes_ray)):
         # more same ray origin because more rays per voxel, then check if active voxel when all its rays intersect active pixels (nr rays = nr imgs))
         counter += 1
-        origin = [cubes_ray[i][0], cubes_ray[i][1], cubes_ray[i][2]]
-        ray = [cubes_ray[i][3],cubes_ray[i][4],cubes_ray[i][5]]
+        origin = [cubes_ray[i][j] for j in range(3)]
+        ray = [cubes_ray[i][j] for j in range(3,6)]
         # cube ray doesn't intesect all valid pixels in all images
         invalid = False
         point = []
 
         for k in px_plane_coord.keys():
             # random point on plane to get point of intersection if any -> corner point
-            ref_px = [px_plane_coord[k][0][0][3],px_plane_coord[k][0][0][4],px_plane_coord[k][0][0][5]]
+            ref_px = [px_plane_coord[k][0][0][i] for i in range(3,6)]
             # get normal of plane knowing the name of the image depending on its orientation
             normal = []
             if k == 'img1': 
@@ -274,7 +275,7 @@ def active_voxels(epsilon=1e-6):
             if dot > epsilon:
                 # find point of intersection
                 # difference between point on plane and origin of ray
-                w = [origin[0] - ref_px[0] , origin[1] - ref_px[1], origin[2] - ref_px[2]]
+                w = [origin[i] - ref_px[i] for i in range(3)]
                 fac = - dot_v3v3(normal,w)/dot
                 u = mul_v3_fl(ray,fac)
                 point = add_v3v3(origin, u)
@@ -282,7 +283,7 @@ def active_voxels(epsilon=1e-6):
                 # check in which pixel the intersection point is, set one value True for the cube if active pixel
                 for i in range(len(px_plane_coord[k])):
                     # pixel center
-                    center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
+                    center = [px_plane_coord[k][i][0][m] for m in range(3)]
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
@@ -362,8 +363,6 @@ def active_voxels(epsilon=1e-6):
             if inconsistent:
                 inconsistent_pixels[k].append(temp_inconsistent[k][i])
             inconsistent = True
-    print(active_pixels)
-    print(inconsistent_pixels)
                 
         
 
@@ -372,6 +371,7 @@ def active_voxels(epsilon=1e-6):
     bm = bmesh.new()
     for idx, location in enumerate(active_cubes):
         new_mesh = bpy.data.meshes.new(f'result ${idx}')
+        # pass vertices of cube, edges which connect vertices and faces
         new_mesh.from_pydata(
             [
             [location[0]-0.5,location[1]-0.5, location[2]+0.5],
@@ -432,9 +432,12 @@ def add_v3v3(v0, v1):
 
             
             
-# PART 2 ---- OPTIMISATION
+# --------------OPTIMISATION--------------
 
             
+def empty_voxels():
+
+
 
     
     
@@ -444,6 +447,7 @@ def add_v3v3(v0, v1):
 
 
 
+# --------------RUN CODE--------------
 
 # clean scene removing all collections and objects before working
 clean()
@@ -528,7 +532,6 @@ ray_light('img2',dic_img2, pos_lights[1], corners_coord)
 # coordinates of voxels
 # for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
 cubes_ray = []
-cubes_coord = []
 hull_space()
 
 # cubes which rays passes through active pixels for each image
@@ -539,4 +542,7 @@ for e in img_names:
     inconsistent_pixels[e] = []
 
 active_voxels()
-# print(inconsistent_pixels)
+print(inconsistent_pixels)
+
+# line of empty voxels with corresponding cost for each inconsistent pixel
+empty voxels = {}
