@@ -81,13 +81,13 @@ def create_img(img_name, img, dic, rot_y):
                 if (img[i][j] == 1):
                     empty = False
                     #upper left
-                    temp.append([loc[0], loc[1]+0.5, loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]+0.5, loc[2]+0.5])
                     #upper right
-                    temp.append([loc[0], loc[1]-0.5, loc[2]+0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]-0.5, loc[2]+0.5])
                     #bottom left
-                    temp.append([loc[0], loc[1]+0.5, loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]+0.5, loc[2]-0.5])
                     #bottom right
-                    temp.append([loc[0], loc[1]-0.5, loc[2]-0.5])
+                    temp.append([loc[0], loc[1], loc[2],loc[0], loc[1]-0.5, loc[2]-0.5])
 
             elif img_name == 'img4':
                 loc = [j-4,-20,i]
@@ -155,6 +155,7 @@ def create_img(img_name, img, dic, rot_y):
     # if no active pixel found in the current image, remove image from dictionary px_plane_coord because empty value
     if empty:
         px_plane_coord.pop(img_name)
+
 
 
 
@@ -236,6 +237,7 @@ def active_voxels(epsilon=1e-6):
     intersection = False
     active_check = []
     active_pixels = []
+    temp = []
     temp_inconsistent = {}
     for e in img_names:
         temp_inconsistent[e] = []
@@ -243,7 +245,6 @@ def active_voxels(epsilon=1e-6):
     for i in range(len(cubes_ray)):
         # more same ray origin because more rays per voxel, then check if active voxel when all its rays intersect active pixels (nr rays = nr imgs))
         counter += 1
-        temp = []
         origin = [cubes_ray[i][0], cubes_ray[i][1], cubes_ray[i][2]]
         ray = [cubes_ray[i][3],cubes_ray[i][4],cubes_ray[i][5]]
         # cube ray doesn't intesect all valid pixels in all images
@@ -280,6 +281,8 @@ def active_voxels(epsilon=1e-6):
 
                 # check in which pixel the intersection point is, set one value True for the cube if active pixel
                 for i in range(len(px_plane_coord[k])):
+                    # pixel center
+                    center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
@@ -287,26 +290,20 @@ def active_voxels(epsilon=1e-6):
                         if k == 'img1':
                             if point[1] < px_plane_coord[k][i][1][4] and point[1] >= px_plane_coord[k][i][0][4]:
                                 intersection = True
-                                active_check.append(k)
                         elif k == 'img3':
                             if point[1] >= px_plane_coord[k][i][1][4] and point[1] < px_plane_coord[k][i][0][4]:
                                 intersection = True
-                                active_check.append(k)
                         elif k == 'img2':
                             if point[0] < px_plane_coord[k][i][0][3] and point[0] >= px_plane_coord[k][i][1][3]:
                                 intersection = True
-                                active_check.append(k)
                         else:
                             if point[0] >= px_plane_coord[k][i][0][3] and point[0] < px_plane_coord[k][i][1][3]:
                                 intersection = True
-                                active_check.append(k)
 
                     if intersection:
-                        # active_check.append(k)
+                        active_check.append(k)
+                        temp.append(center)
                         #save center of pixel as temporary inconsistent, add to correct dictionary if truely inconsistent
-                        center = [px_plane_coord[k][i][0][0],px_plane_coord[k][i][0][1],px_plane_coord[k][i][0][2]]
-                        if center not in active_pixels:
-                            active_pixels.append(center)
                         if center not in temp_inconsistent[k]:
                             temp_inconsistent[k].append(center)
                     intersection = False
@@ -319,9 +316,14 @@ def active_voxels(epsilon=1e-6):
                     break
             if invalid:
                 active_check = []
+                temp = []
                 continue
             else:
                 active_cubes.append(origin)
+                # print(temp)
+                for e in temp:
+                    if e not in active_pixels:
+                        active_pixels.append(e)
 
 
 
@@ -343,10 +345,8 @@ def active_voxels(epsilon=1e-6):
 
 
             active_check = []
+            temp = []
             # add unique active pixels
-            for e in temp:
-                if e not in active_pixels:
-                    active_pixels.append(e)
 
     
     # temp_inconsistent contains all active and inconsistent pixels (creates voxels and cannot create voxels because voxels ray doesn't intersect with active pixel of
@@ -467,6 +467,9 @@ for i in range(img_size):
         #     if j >= 2 and j < 8:
         if i == 0 and j == 0:
             img1[i][j] = 1
+            img2[i][j] = 1
+            # img2[i][j] = 1
+        if i == 4:
             img2[i][j] = 1
                 # img3[i][j] = 1
                 # img4[i][j] = 1
