@@ -240,6 +240,7 @@ def active_voxels(epsilon=1e-6):
     active_pixels = []
     temp = []
     temp_inconsistent = {}
+    temp_empty_voxels = {}
     for e in img_names:
         temp_inconsistent[e] = []
 
@@ -284,6 +285,8 @@ def active_voxels(epsilon=1e-6):
                 for i in range(len(px_plane_coord[k])):
                     # pixel center
                     center = [px_plane_coord[k][i][0][m] for m in range(3)]
+                    if str(center) not in temp_empty_voxels.keys():
+                        temp_empty_voxels[str(center)] = []
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
@@ -304,6 +307,7 @@ def active_voxels(epsilon=1e-6):
                     if intersection:
                         active_check.append(k)
                         temp.append(center)
+                        temp_empty_voxels[str(center)].append(origin)
                         #save center of pixel as temporary inconsistent, add to correct dictionary if truely inconsistent
                         if center not in temp_inconsistent[k]:
                             temp_inconsistent[k].append(center)
@@ -321,7 +325,6 @@ def active_voxels(epsilon=1e-6):
                 continue
             else:
                 active_cubes.append(origin)
-                # print(temp)
                 for e in temp:
                     if e not in active_pixels:
                         active_pixels.append(e)
@@ -363,10 +366,29 @@ def active_voxels(epsilon=1e-6):
             if inconsistent:
                 inconsistent_pixels[k].append(temp_inconsistent[k][i])
             inconsistent = True
-                
+    
+    # add voxels associated to inconsistent pixels which has not been created
+    empty = True
+    # print(temp_empty_voxels)
+    # print(active_cubes)
+    # create activ voxels
+    #remove detected activ pixels
+
+    # print(temp_empty_voxels)
+    for k in temp_empty_voxels.keys():
+        for i in range(len(temp_empty_voxels[k])):
+            for j in range(len(active_cubes)):
+                if temp_empty_voxels[k][i][0] == active_cubes[j][0] and temp_empty_voxels[k][i][1] == active_cubes[j][1] and temp_empty_voxels[k][i][2] == active_cubes[j][2]:
+                    empty = False
+            if empty:
+                if k not in empty_voxels.keys():
+                    empty_voxels[k] = []
+                    empty_voxels[k].append(temp_empty_voxels[k][i])
+                else:
+                    if temp_empty_voxels[k][i] not in empty_voxels[k]:
+                        empty_voxels[k].append(temp_empty_voxels[k][i])
         
 
-    # create activ voxels
     bpy.data.collections.new('voxels')
     bm = bmesh.new()
     for idx, location in enumerate(active_cubes):
@@ -435,23 +457,22 @@ def add_v3v3(v0, v1):
 # --------------OPTIMISATION--------------
 
             
-def find_empty_voxels():
-    for k in inconsistent_pixels.keys():
-        # center and corners inconsistent pixel 
-        for v in range(len(inconsistent_pixels[k])):
-            # find corners of inconsistent pixel from px_plane_coord by finding corresponding center
-            info = None
+# def find_empty_voxels():
+#     for k in inconsistent_pixels.keys():
+#         # center and corners inconsistent pixel 
+#         for v in range(len(inconsistent_pixels[k])):
+#             # find corners of inconsistent pixel from px_plane_coord by finding corresponding center
+#             info = None
 
-            for k2 in px_plane_coord.keys():
-                for i in range(len(px_plane_coord[k2])):
-                    if px_plane_coord[k2][i][0][0] == inconsistent_pixels[k][v][0] and px_plane_coord[k2][i][0][1] == inconsistent_pixels[k][v][1] and px_plane_coord[k2][i][0][2] == inconsistent_pixels[k][v][2]:
-                        info = px_plane_coord[k2][i]
+#             for k2 in px_plane_coord.keys():
+#                 for i in range(len(px_plane_coord[k2])):
+#                     if px_plane_coord[k2][i][0][0] == inconsistent_pixels[k][v][0] and px_plane_coord[k2][i][0][1] == inconsistent_pixels[k][v][1] and px_plane_coord[k2][i][0][2] == inconsistent_pixels[k][v][2]:
+#                         info = px_plane_coord[k2][i]
             
-            # find ray of voxel which intersect inconsistent pixel and save voxel in empty_voxels
+#             # find ray of voxel which intersect inconsistent pixel and save voxel in empty_voxels
 
-            print(info)
 
-    # print(info)
+#     # print(info)
 
 
 
@@ -559,9 +580,13 @@ inconsistent_pixels = {}
 for e in img_names:
     inconsistent_pixels[e] = []
 
-active_voxels()
-print(inconsistent_pixels)
-
-# line of empty voxels with corresponding cost for each inconsistent pixel
 empty_voxels = {}
-find_empty_voxels()
+
+active_voxels()
+
+print(inconsistent_pixels)
+print('-----')
+print(empty_voxels)
+
+# using center of invalid pixels as key, as value we have the list of empty voxels (could have been created if no contraints by other images given)
+# find_empty_voxels()
