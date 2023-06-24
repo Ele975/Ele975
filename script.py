@@ -285,8 +285,11 @@ def active_voxels(epsilon=1e-6):
                 for i in range(len(px_plane_coord[k])):
                     # pixel center
                     center = [px_plane_coord[k][i][0][m] for m in range(3)]
-                    if str(center) not in temp_empty_voxels.keys():
-                        temp_empty_voxels[str(center)] = []
+                    #cannot use array as keys, then transform in string
+                    center_str = "{},{},{}".format(center[0], center[1],center[2])
+                    if center_str not in temp_empty_voxels.keys():
+                        temp_empty_voxels[center_str] = []
+                    # print(temp_empty_voxels)
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
@@ -307,7 +310,7 @@ def active_voxels(epsilon=1e-6):
                     if intersection:
                         active_check.append(k)
                         temp.append(center)
-                        temp_empty_voxels[str(center)].append(origin)
+                        temp_empty_voxels[center_str].append(origin)
                         #save center of pixel as temporary inconsistent, add to correct dictionary if truely inconsistent
                         if center not in temp_inconsistent[k]:
                             temp_inconsistent[k].append(center)
@@ -352,7 +355,7 @@ def active_voxels(epsilon=1e-6):
             temp = []
             # add unique active pixels
 
-    
+    print(temp_empty_voxels)
     # temp_inconsistent contains all active and inconsistent pixels (creates voxels and cannot create voxels because voxels ray doesn't intersect with active pixel of
     # one/more other images)
     # remove all active pixels to get only inconsistent pixels
@@ -360,12 +363,8 @@ def active_voxels(epsilon=1e-6):
     for k in temp_inconsistent.keys():
         for i in range(len(temp_inconsistent[k])):
             for j in range(len(active_pixels)):
-                if active_pixels[j][0] == temp_inconsistent[k][i][0] and active_pixels[j][1] == temp_inconsistent[k][i][1] and active_pixels[j][1] == temp_inconsistent[k][i][1]:
-                    inconsistent = False
-                    break
-            if inconsistent:
-                inconsistent_pixels[k].append(temp_inconsistent[k][i])
-            inconsistent = True
+                if temp_inconsistent[k][i] not in active_pixels and temp_inconsistent[k][i] not in inconsistent_pixels[k]:
+                    inconsistent_pixels[k].append(temp_inconsistent[k][i])
     
     # add voxels associated to inconsistent pixels which has not been created
     empty = True
@@ -374,19 +373,44 @@ def active_voxels(epsilon=1e-6):
     # create activ voxels
     #remove detected activ pixels
 
-    # print(temp_empty_voxels)
+    # remove keys of active pixels
+    temp = {}
+    for k in temp_empty_voxels.keys():
+        k_int = [int(x) for x in (k.split(','))]
+        if k_int not in active_pixels:
+            temp[k] = temp_empty_voxels[k]
+    
+    print(temp)
+
+
+
+
+    print("ACTIVE", active_pixels)
     for k in temp_empty_voxels.keys():
         for i in range(len(temp_empty_voxels[k])):
             for j in range(len(active_cubes)):
                 if temp_empty_voxels[k][i][0] == active_cubes[j][0] and temp_empty_voxels[k][i][1] == active_cubes[j][1] and temp_empty_voxels[k][i][2] == active_cubes[j][2]:
                     empty = False
             if empty:
-                if k not in empty_voxels.keys():
-                    empty_voxels[k] = []
-                    empty_voxels[k].append(temp_empty_voxels[k][i])
-                else:
-                    if temp_empty_voxels[k][i] not in empty_voxels[k]:
+                # retrieve int array corresponding to str k
+                # print(k)
+                # print(k_int)
+                # print('--------')
+                k_int = [int(x) for x in (k.split(','))]
+                # print(k_int)
+                # print(type(k_int))
+                # print(active_pixels[0])
+                # print(type(active_pixels[0]))
+                # print('------')
+                if k_int not in active_pixels:
+                    print('entered')
+                    if k not in empty_voxels.keys():
+                        empty_voxels[k] = []
                         empty_voxels[k].append(temp_empty_voxels[k][i])
+                    else:
+                        if temp_empty_voxels[k][i] not in empty_voxels[k]:
+                            empty_voxels[k].append(temp_empty_voxels[k][i])
+
         
 
     bpy.data.collections.new('voxels')
