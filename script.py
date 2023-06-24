@@ -6,28 +6,40 @@ import sys
 # assumption 1 -> light positions are fixed with angle of 90 degrees
 # assumption 2 -> can add from 1 up to 4 images
 
-# read command-line arguments
-# 1 param -> number of images
-# 2-5 param -> angles. Can be: 0,90,180,270, where 0 is positive x axis and the other in clockwise direction with steps of 90 degrees
+# read command-line arguments -> nr_images angles filenames
+# nr_images -> number of images
+# angles -> 1-4 angles. Can be: 0,90,180,270, where 0 is positive x axis and the other in clockwise direction with steps of 90 degrees
 print(sys.argv)
-nr_img = int(sys.argv[4])
-angles=[]
-for i in range(nr_img):
-    angles.append(int(sys.argv[i + 5]))
 
-img_names= []
-for e in angles:
-    if e == 0:
-        img_names.append('img1')
-    if e == 90:
-        img_names.append('img2')
-    if e == 180:
-        img_names.append('img3')
-    if e == 270:
-        img_names.append('img4')
-
-
-
+nr_images = None
+angles = []
+img_names = []
+filenames = []
+# read command-line arguments
+for i in range(4,len(sys.argv)):
+    if i == 4:
+        nr_images = int(sys.argv[i])
+    elif i > 4 and i <= 4 + nr_images:
+        angles.append(int(sys.argv[i]))
+        if int(sys.argv[i]) == 0:
+            img_names.append('img1')
+        elif int(sys.argv[i]) == 90:
+            img_names.append('img2')
+        elif int(sys.argv[i]) == 180:
+            img_names.append('img3')
+        elif int(sys.argv[i]) == 270:
+            img_names.append('img4')
+        else:
+            sys.exit('Invalid angle value. Pass a valid parameter: 0,90,180,270')
+    elif i > 4 + nr_images and i <= 4 + 2*nr_images:
+        filenames.append(sys.argv[i])
+    else:
+        sys.exit('Invalid number of parameters. Pass: nr_images, angles for each light (one for image), file for each image respecting the corresponding angle.')
+    
+print(nr_images)
+print(angles)
+print(img_names)
+print(filenames)
 
 C = bpy.context
 D = bpy.data
@@ -233,7 +245,7 @@ def hull_space():
 # if the cube ray intersect an active pixel in each image, set it to true
 # for each ray, for each active corner pixel positions check if they intersect
 def active_voxels(epsilon=1e-6):
-    nr_rays_per_voxel = nr_img
+    nr_rays_per_voxel = nr_images
     counter = 0
     intersection = False
     active_check = []
@@ -317,7 +329,7 @@ def active_voxels(epsilon=1e-6):
                     intersection = False
 
         # check that all rays (depending on the number of imgs) of each voxel intersect active pixels. If yes, make them active (create them)
-        if counter % nr_img == 0:
+        if counter % nr_images == 0:
             for e in img_names:
                 if e not in active_check:
                     invalid = True
@@ -355,7 +367,6 @@ def active_voxels(epsilon=1e-6):
             temp = []
             # add unique active pixels
 
-    print(temp_empty_voxels)
     # temp_inconsistent contains all active and inconsistent pixels (creates voxels and cannot create voxels because voxels ray doesn't intersect with active pixel of
     # one/more other images)
     # remove all active pixels to get only inconsistent pixels
@@ -365,51 +376,30 @@ def active_voxels(epsilon=1e-6):
             for j in range(len(active_pixels)):
                 if temp_inconsistent[k][i] not in active_pixels and temp_inconsistent[k][i] not in inconsistent_pixels[k]:
                     inconsistent_pixels[k].append(temp_inconsistent[k][i])
-    
-    # add voxels associated to inconsistent pixels which has not been created
-    empty = True
-    # print(temp_empty_voxels)
-    # print(active_cubes)
-    # create activ voxels
-    #remove detected activ pixels
 
-    # remove keys of active pixels
+    # find empty voxels -> NOT WORKING
+    # remove active pixels as keys
     temp = {}
     for k in temp_empty_voxels.keys():
         k_int = [int(x) for x in (k.split(','))]
         if k_int not in active_pixels:
             temp[k] = temp_empty_voxels[k]
     
-    print(temp)
-
-
-
-
-    print("ACTIVE", active_pixels)
+    temp_empty_voxels = temp
+    empty = True
     for k in temp_empty_voxels.keys():
         for i in range(len(temp_empty_voxels[k])):
             for j in range(len(active_cubes)):
                 if temp_empty_voxels[k][i][0] == active_cubes[j][0] and temp_empty_voxels[k][i][1] == active_cubes[j][1] and temp_empty_voxels[k][i][2] == active_cubes[j][2]:
                     empty = False
             if empty:
-                # retrieve int array corresponding to str k
-                # print(k)
-                # print(k_int)
-                # print('--------')
                 k_int = [int(x) for x in (k.split(','))]
-                # print(k_int)
-                # print(type(k_int))
-                # print(active_pixels[0])
-                # print(type(active_pixels[0]))
-                # print('------')
-                if k_int not in active_pixels:
-                    print('entered')
-                    if k not in empty_voxels.keys():
-                        empty_voxels[k] = []
+                if k not in empty_voxels.keys():
+                    empty_voxels[k] = []
+                    empty_voxels[k].append(temp_empty_voxels[k][i])
+                else:
+                    if temp_empty_voxels[k][i] not in empty_voxels[k]:
                         empty_voxels[k].append(temp_empty_voxels[k][i])
-                    else:
-                        if temp_empty_voxels[k][i] not in empty_voxels[k]:
-                            empty_voxels[k].append(temp_empty_voxels[k][i])
 
         
 
@@ -536,8 +526,8 @@ for i in range(img_size):
             img1[i][j] = 1
             img2[i][j] = 1
             # img2[i][j] = 1
-        if i == 4:
-            img2[i][j] = 1
+        # if i == 4:
+        #     img2[i][j] = 1
                 # img3[i][j] = 1
                 # img4[i][j] = 1
                 
@@ -571,7 +561,7 @@ dic_img4 = {}
 # where param -> [p1,p2,p3,p4,p5,p6]
 # where p's: 3 first parameters are the coordinates of the pixel center, last 3 parameters are corners coordinates of the pixel (then pixel center repeated for all corners)
 px_plane_coord = {}
-# for i in range(nr_img):
+# for i in range(nr_images):
 
 # for e in img_names:
 #     create_img(e, )
@@ -608,9 +598,9 @@ empty_voxels = {}
 
 active_voxels()
 
-print(inconsistent_pixels)
-print('-----')
-print(empty_voxels)
+# print(inconsistent_pixels)
+# print('-----')
+# print(empty_voxels)
 
 # using center of invalid pixels as key, as value we have the list of empty voxels (could have been created if no contraints by other images given)
 # find_empty_voxels()
