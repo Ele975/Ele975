@@ -6,41 +6,6 @@ import sys
 # assumption 1 -> light positions are fixed with angle of 90 degrees
 # assumption 2 -> can add from 1 up to 4 images
 
-# read command-line arguments -> nr_images angles filenames
-# nr_images -> number of images
-# angles -> 1-4 angles. Can be: 0,90,180,270, where 0 is positive x axis and the other in clockwise direction with steps of 90 degrees
-print(sys.argv)
-
-nr_images = None
-angles = []
-img_names = []
-filenames = []
-# read command-line arguments
-for i in range(4,len(sys.argv)):
-    if i == 4:
-        nr_images = int(sys.argv[i])
-    elif i > 4 and i <= 4 + nr_images:
-        angles.append(int(sys.argv[i]))
-        if int(sys.argv[i]) == 0:
-            img_names.append('img1')
-        elif int(sys.argv[i]) == 90:
-            img_names.append('img2')
-        elif int(sys.argv[i]) == 180:
-            img_names.append('img3')
-        elif int(sys.argv[i]) == 270:
-            img_names.append('img4')
-        else:
-            sys.exit('Invalid angle value. Pass a valid parameter: 0,90,180,270')
-    elif i > 4 + nr_images and i <= 4 + 2*nr_images:
-        filenames.append(sys.argv[i])
-    else:
-        sys.exit('Invalid number of parameters. Pass: nr_images, angles for each light (one for image), file for each image respecting the corresponding angle.')
-    
-print(nr_images)
-print(angles)
-print(img_names)
-print(filenames)
-
 C = bpy.context
 D = bpy.data
 
@@ -500,7 +465,7 @@ def add_v3v3(v0, v1):
 
 
 
-# --------------RUN CODE--------------
+# --------------RUN CODE --------------
 
 # clean scene removing all collections and objects before working
 clean()
@@ -509,34 +474,46 @@ clean()
 lights = bpy.data.collections.new('lights')
 bpy.context.scene.collection.children.link(lights)
     
-# pixel input images -> example
+
+# read command-line arguments -> nr_images angles filenames
+# nr_images -> number of images
+# angles -> 1-4 angles. Can be: 0,90,180,270, where 0 is positive x axis and the other in clockwise direction with steps of 90 degrees
+print(sys.argv)
+
 img_size = 9
-img1 = [[0 for i in range(img_size)] for j in range(img_size)]
-img2 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-# img4 = [[0 for i in range(img_size)] for j in range(img_size)]
-
-#square NEED TO CHANGE -> PASS AS PARAMETER
-for i in range(img_size):
-    for j in range(img_size):
-        # img4[i][j] = 1
-        # if i >= 2 and i < 8:
-        #     if j >= 2 and j < 8:
-        if i == 0 and j == 0:
-            img1[i][j] = 1
-            img2[i][j] = 1
-            # img2[i][j] = 1
-        # if i == 4:
-        #     img2[i][j] = 1
-                # img3[i][j] = 1
-                # img4[i][j] = 1
-                
-
-
-
-# coordinates of all lights depending on angle
+nr_images = None
+img_names = []
+images = []
+angles = []
 pos_lights = []
+filenames = []
+# read command-line arguments
+for i in range(4,len(sys.argv)):
+    if i == 4:
+        nr_images = int(sys.argv[i])
+    elif i > 4 and i <= 4 + nr_images:
+        angles.append(int(sys.argv[i]))
+        if int(sys.argv[i]) == 0:
+            img_names.append('img1')
+        elif int(sys.argv[i]) == 90:
+            img_names.append('img2')
+        elif int(sys.argv[i]) == 180:
+            img_names.append('img3')
+        elif int(sys.argv[i]) == 270:
+            img_names.append('img4')
+        else:
+            sys.exit('Invalid angle value. Pass a valid parameter: 0,90,180,270')
+    elif i > 4 + nr_images and i <= 4 + 2*nr_images:
+        filenames.append(sys.argv[i])
+    else:
+        sys.exit('Invalid number of parameters. Pass: nr_images, angles for each light (one for image), file for each image respecting the corresponding angle.')
+    
+print(nr_images)
+print(angles)
+print(img_names)
+print(filenames)
 
+# store lights coordinates based on angles
 for i in range(len(angles)):
     if angles[i] == 0:
         pos_lights.append([50,0,4])
@@ -547,60 +524,142 @@ for i in range(len(angles)):
     else:
         pos_lights.append([0,-50,4])
 
-
-# call functions
-
-# dictionary containing as key the i,j coordinates of the pixels and as value their cartesian coordinates
-dic_img1 = {}
-dic_img2 = {}
-dic_img3 = {}
-dic_img4 = {}
+# read txt files 
+lines = []
+for e in filenames:
+    with open(e, 'r') as f:
+        lines.append(f.readline())
+# append int array of images
+for i,e in enumerate(lines):
+    if i >= 0 and i < nr_images:
+        images.append(eval(e))
+    else:
+        sys.exit('Invalid number of files. Respect number given as first parameter.')
 
 # using img name as key
 # structure -> img1 : [[param1,param2,param3,param4], [parm1,param2,param3,param4]...]
 # where param -> [p1,p2,p3,p4,p5,p6]
 # where p's: 3 first parameters are the coordinates of the pixel center, last 3 parameters are corners coordinates of the pixel (then pixel center repeated for all corners)
 px_plane_coord = {}
-# for i in range(nr_images):
 
-# for e in img_names:
-#     create_img(e, )
-create_img('img1',img1,dic_img1, math.radians(90))
-create_img('img2',img2,dic_img2,  math.radians(90))
-# create_img('img3',img3,dic_img3,  math.radians(90))
-# create_img('img4',img4,dic_img4,  math.radians(90))
-
-for i in range(len(angles)):
-    create_light(pos_lights[i])
-
-
-# array containing name of the image the rays belong to and starting_point(light), ending_point1,ending_point2... of corner pixels for each img (4 for each img)
 corners_coord = []
-
-ray_light('img1', dic_img1, pos_lights[0], corners_coord)
-ray_light('img2',dic_img2, pos_lights[1], corners_coord)
-# ray_light('img3',dic_img3, pos_lights[2], corners_coord)
-# ray_light('img4',dic_img4, pos_lights[3], corners_coord)
-
-# coordinates of voxels
-# for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
+# origin of voxels and rays from voxels centers to light origin
 cubes_ray = []
+
+for i in range(nr_images):
+    # dictionary containing as key the i,j coordinates of the pixels and as value their cartesian coordinates
+    dic_img = {}
+    # display images in blender
+    create_img(img_names[i],images[i],dic_img, math.radians(90))
+    # display lights in blender
+    create_light(pos_lights[i])
+    # create and display lights rays which intersect center of each pixel
+    ray_light(img_names[i], dic_img, pos_lights[i], corners_coord)
+
+# ---------- SHADOW HULL ----------
+# define all voxels in a suitable space
 hull_space()
 
 # cubes which rays passes through active pixels for each image
 active_cubes = []
-# set of incosistent pixels -> active pixels in the images but empty in the corresponding shadow (= the voxel cannot be created because its ray doesn't intersect an active pixel one/more other image/s)
+
+# ---------- SHADOW HULL AND PART OF OPTIMISATION ----------
+# set of incosistent pixels -> active pixels in the images but empty in the corresponding shadow (= the voxel cannot be created because its ray doesn't intersect an active pixel of one/more other image/s)
 inconsistent_pixels = {}
 for e in img_names:
     inconsistent_pixels[e] = []
 
+# store inconsistent pixels as key and corresponding empty voxels as value
 empty_voxels = {}
-
 active_voxels()
 
-# print(inconsistent_pixels)
-# print('-----')
-# print(empty_voxels)
+# # # pixel input images -> example
+# # img1 = [[0 for i in range(img_size)] for j in range(img_size)]
+# # img2 = [[0 for i in range(img_size)] for j in range(img_size)]
+# # # img3 = [[0 for i in range(img_size)] for j in range(img_size)]
+# # # img4 = [[0 for i in range(img_size)] for j in range(img_size)]
 
-# using center of invalid pixels as key, as value we have the list of empty voxels (could have been created if no contraints by other images given)
-# find_empty_voxels()
+# # #square NEED TO CHANGE -> PASS AS PARAMETER
+# # for i in range(img_size):
+# #     for j in range(img_size):
+# #         # img4[i][j] = 1
+# #         # if i >= 2 and i < 8:
+# #         #     if j >= 2 and j < 8:
+# #         if i == 0 and j == 0:
+# #             img1[i][j] = 1
+# #             img2[i][j] = 1
+# #             # img2[i][j] = 1
+# #         # if i == 4:
+# #         #     img2[i][j] = 1
+# #                 # img3[i][j] = 1
+# #                 # img4[i][j] = 1
+                
+
+
+
+# # # coordinates of all lights depending on angle
+# # pos_lights = []
+
+# # for i in range(len(angles)):
+# #     if angles[i] == 0:
+# #         pos_lights.append([50,0,4])
+# #     elif angles[i] == 90:
+# #         pos_lights.append([0,50,4])
+# #     elif angles[i] == 180:
+# #         pos_lights.append([-50,0,4])
+# #     else:
+# #         pos_lights.append([0,-50,4])
+
+
+# # call functions
+
+# # dictionary containing as key the i,j coordinates of the pixels and as value their cartesian coordinates
+# # dic_img1 = {}
+# # dic_img2 = {}
+# # dic_img3 = {}
+# # dic_img4 = {}
+
+# # px_plane_coord = {}
+# # for i in range(nr_images):
+
+# # for e in img_names:
+# #     create_img(e, )
+# create_img('img1',img1,dic_img1, math.radians(90))
+# create_img('img2',img2,dic_img2,  math.radians(90))
+# # create_img('img3',img3,dic_img3,  math.radians(90))
+# # create_img('img4',img4,dic_img4,  math.radians(90))
+
+# for i in range(len(angles)):
+#     create_light(pos_lights[i])
+
+
+# # array containing name of the image the rays belong to and starting_point(light), ending_point1,ending_point2... of corner pixels for each img (4 for each img)
+# # corners_coord = []
+
+# # ray_light('img1', dic_img1, pos_lights[0], corners_coord)
+# # ray_light('img2',dic_img2, pos_lights[1], corners_coord)
+# # ray_light('img3',dic_img3, pos_lights[2], corners_coord)
+# # ray_light('img4',dic_img4, pos_lights[3], corners_coord)
+
+# # coordinates of voxels
+# # for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
+# cubes_ray = []
+# hull_space()
+
+# # cubes which rays passes through active pixels for each image
+# active_cubes = []
+# # set of incosistent pixels -> active pixels in the images but empty in the corresponding shadow (= the voxel cannot be created because its ray doesn't intersect an active pixel one/more other image/s)
+# inconsistent_pixels = {}
+# for e in img_names:
+#     inconsistent_pixels[e] = []
+
+# empty_voxels = {}
+
+# active_voxels()
+
+# # print(inconsistent_pixels)
+# # print('-----')
+# # print(empty_voxels)
+
+# # using center of invalid pixels as key, as value we have the list of empty voxels (could have been created if no contraints by other images given)
+# # find_empty_voxels()
