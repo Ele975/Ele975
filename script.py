@@ -3,8 +3,8 @@ import math
 import bmesh
 import sys
 
-# assumption 1 -> light positions are fixed with angle of 90 degrees
-# assumption 2 -> can add from 1 up to 4 images
+# assumption 1 -> light positions are fixed with angle differences of 90 degrees
+# assumption 2 -> can add from 1 up to 4 images of size 9x9
 
 C = bpy.context
 D = bpy.data
@@ -22,28 +22,29 @@ def clean():
     bpy.ops.object.delete()
 
     # Delete all materials
-    for material in bpy.data.materials:
-        bpy.data.materials.remove(material)
+    for material in D.materials:
+        D.materials.remove(material)
 
     # Delete all collections (except the default collection)
-    for collection in bpy.data.collections:
+    for collection in D.collections:
         if collection.name != 'Collection':
-            bpy.data.collections.remove(collection)
+            D.collections.remove(collection)
 
 
-
+# create light objects
 def create_light(pos):
     # create light
-    light_data = bpy.data.lights.new(name="my-light-data", type='POINT')
+    light_data = D.lights.new(name="my-light-data", type='POINT')
     light_data.energy = 100
     # Create new object, pass the light data 
-    light_object = bpy.data.objects.new(name="my-light", object_data=light_data)
+    light_object = D.objects.new(name="my-light", object_data=light_data)
 
     light_object.location = pos
     # Link object to collection in context
-    bpy.data.collections['lights'].objects.link(light_object)
+    D.collections['lights'].objects.link(light_object)
 
 
+#create image objects
 def create_img(img_name, img, dic, rot_y):
     temp = []
     empty = True
@@ -111,7 +112,7 @@ def create_img(img_name, img, dic, rot_y):
 
             # Create planes as pixels
             bpy.ops.mesh.primitive_plane_add(size=1.0, location= loc)
-            pixel = bpy.context.object
+            pixel = C.object
             pixel.name = "Pixel"
             pixel.rotation_euler[0] = math.radians(90)
             if rot_y != None and (img_name == 'img1' or img_name == 'img3'):
@@ -121,7 +122,7 @@ def create_img(img_name, img, dic, rot_y):
 
 
             # add color for active pixels (black)
-            material = bpy.data.materials.new(name="PixelMaterial")
+            material = D.materials.new(name="PixelMaterial")
             if img[i][j] == 0:
                 material.diffuse_color = (1, 1, 1,0)  
             else:
@@ -135,10 +136,8 @@ def create_img(img_name, img, dic, rot_y):
 
 
 
-
-# Create light rays -> use a mesh and attach it to an object, then insert in collection
-# create a ray for each pixel center
-
+# rays NOT NEEDED, only to get corners coordinates of each pixel. Maintained to permit seeing what it did
+# Create light rays -> create a ray for each pixel center
 def ray_light(name, dic, pos_light, corners):
             # light position
             init_coord = [pos_light[0], pos_light[1], pos_light[2]]
@@ -157,17 +156,9 @@ def ray_light(name, dic, pos_light, corners):
             for i in range(len(end_coords)):
                 end_point =increase_line_length(init_coord, end_coords[i],30)
                 info.append(end_point)
-                # verts = [(init_coord), (end_point[0], end_point[1], end_point[2])]
-                # edges = [(0, 1)]
-                # ray_light = bpy.data.meshes.new('ray' + str(name))
-                # ray_light.from_pydata(verts, edges, [])
-                # ray_light.update()
-                # mesh_obj = bpy.data.objects.new('obj_' + str(name), ray_light)
-                # lights.objects.link(mesh_obj)
-
             corners.append(info)
 
-
+# helper function for ray_light(). Extends length of rays passing through light origin and pixels centers
 def increase_line_length(start_point, end_point, length_increase):
     # Calculate direction vector of the line
     direction = [(end_point[i] - start_point[i]) for i in range(3)]
@@ -187,11 +178,9 @@ def increase_line_length(start_point, end_point, length_increase):
     return new_end_point
 
 
-# find total hull square space in the middle of all images
+# find total hull square space in the middle of all images and get voxel rays
 def hull_space():
     # hull space of 20x20x60 (to be sure because of projection) -> used to visualise entire hull space
-    # loc=[0,0,5]
-    # bpy.ops.mesh.primitive_cube_add(size=20.0, location= loc)
     # voxels of size 1
     for i in range(20): 
         for j in range(20):
@@ -266,7 +255,6 @@ def active_voxels(epsilon=1e-6):
                     center_str = "{},{},{}".format(center[0], center[1],center[2])
                     if center_str not in temp_empty_voxels.keys():
                         temp_empty_voxels[center_str] = []
-                    # print(temp_empty_voxels)
                     # structure pl_plane_coord[img] = [[corner_ul1,corner_ur1,corner_bl1,corner_br1], [corner_ul2,corner_ur2,corner_bl2,corner_br2], ...]
                     # check z coordinate bottom and up boundary
                     if point[2] < px_plane_coord[k][i][0][5] and point[2] >= px_plane_coord[k][i][2][5]:
@@ -309,25 +297,6 @@ def active_voxels(epsilon=1e-6):
                     if e not in active_pixels:
                         active_pixels.append(e)
 
-
-
-                verts = [(origin[0], origin[1], origin[2]), (pos_lights[0][0], pos_lights[0][1], pos_lights[0][2])]
-                edges = [(0, 1)]
-                ray_light = bpy.data.meshes.new('ray')
-                ray_light.from_pydata(verts, edges, [])
-                ray_light.update()
-                mesh_obj = bpy.data.objects.new('obj_', ray_light)
-                lights.objects.link(mesh_obj)
-
-                verts = [(origin[0], origin[1], origin[2]), ([0,50,4])]
-                edges = [(0, 1)]
-                ray_light = bpy.data.meshes.new('ray')
-                ray_light.from_pydata(verts, edges, [])
-                ray_light.update()
-                mesh_obj = bpy.data.objects.new('obj_', ray_light)
-                lights.objects.link(mesh_obj)
-
-
             active_check = []
             temp = []
             # add unique active pixels
@@ -367,11 +336,11 @@ def active_voxels(epsilon=1e-6):
                         empty_voxels[k].append(temp_empty_voxels[k][i])
 
         
-
-    bpy.data.collections.new('voxels')
+    # generate active voxels
+    D.collections.new('voxels')
     bm = bmesh.new()
     for idx, location in enumerate(active_cubes):
-        new_mesh = bpy.data.meshes.new(f'result ${idx}')
+        new_mesh = D.meshes.new(f'result ${idx}')
         # pass vertices of cube, edges which connect vertices and faces
         new_mesh.from_pydata(
             [
@@ -412,12 +381,11 @@ def active_voxels(epsilon=1e-6):
         new_mesh.update()
         bm.from_mesh(new_mesh)
 
-    m3 = bpy.data.meshes.new('nmesh')
+    m3 = D.meshes.new('nmesh')
     bm.to_mesh(m3)
-    theObj = bpy.data.objects.new("result", m3)
-    for collection in bpy.data.collections:
-        print(collection.name)
-        bpy.data.collections[collection.name].objects.link(theObj)
+    theObj = D.objects.new("result", m3)
+    for collection in D.collections:
+        D.collections[collection.name].objects.link(theObj)
         break
 
                              
@@ -432,38 +400,6 @@ def add_v3v3(v0, v1):
 
 
             
-            
-# --------------OPTIMISATION--------------
-
-            
-# def find_empty_voxels():
-#     for k in inconsistent_pixels.keys():
-#         # center and corners inconsistent pixel 
-#         for v in range(len(inconsistent_pixels[k])):
-#             # find corners of inconsistent pixel from px_plane_coord by finding corresponding center
-#             info = None
-
-#             for k2 in px_plane_coord.keys():
-#                 for i in range(len(px_plane_coord[k2])):
-#                     if px_plane_coord[k2][i][0][0] == inconsistent_pixels[k][v][0] and px_plane_coord[k2][i][0][1] == inconsistent_pixels[k][v][1] and px_plane_coord[k2][i][0][2] == inconsistent_pixels[k][v][2]:
-#                         info = px_plane_coord[k2][i]
-            
-#             # find ray of voxel which intersect inconsistent pixel and save voxel in empty_voxels
-
-
-#     # print(info)
-
-
-
-
-
-    
-    
-            
-
-
-
-
 
 # --------------RUN CODE --------------
 
@@ -471,14 +407,13 @@ def add_v3v3(v0, v1):
 clean()
 
 # collection for light rays
-lights = bpy.data.collections.new('lights')
-bpy.context.scene.collection.children.link(lights)
+lights = D.collections.new('lights')
+C.scene.collection.children.link(lights)
     
 
 # read command-line arguments -> nr_images angles filenames
 # nr_images -> number of images
 # angles -> 1-4 angles. Can be: 0,90,180,270, where 0 is positive x axis and the other in clockwise direction with steps of 90 degrees
-print(sys.argv)
 
 img_size = 9
 nr_images = None
@@ -507,11 +442,6 @@ for i in range(4,len(sys.argv)):
         filenames.append(sys.argv[i])
     else:
         sys.exit('Invalid number of parameters. Pass: nr_images, angles for each light (one for image), file for each image respecting the corresponding angle.')
-    
-print(nr_images)
-print(angles)
-print(img_names)
-print(filenames)
 
 # store lights coordinates based on angles
 for i in range(len(angles)):
@@ -572,94 +502,3 @@ for e in img_names:
 # store inconsistent pixels as key and corresponding empty voxels as value
 empty_voxels = {}
 active_voxels()
-
-# # # pixel input images -> example
-# # img1 = [[0 for i in range(img_size)] for j in range(img_size)]
-# # img2 = [[0 for i in range(img_size)] for j in range(img_size)]
-# # # img3 = [[0 for i in range(img_size)] for j in range(img_size)]
-# # # img4 = [[0 for i in range(img_size)] for j in range(img_size)]
-
-# # #square NEED TO CHANGE -> PASS AS PARAMETER
-# # for i in range(img_size):
-# #     for j in range(img_size):
-# #         # img4[i][j] = 1
-# #         # if i >= 2 and i < 8:
-# #         #     if j >= 2 and j < 8:
-# #         if i == 0 and j == 0:
-# #             img1[i][j] = 1
-# #             img2[i][j] = 1
-# #             # img2[i][j] = 1
-# #         # if i == 4:
-# #         #     img2[i][j] = 1
-# #                 # img3[i][j] = 1
-# #                 # img4[i][j] = 1
-                
-
-
-
-# # # coordinates of all lights depending on angle
-# # pos_lights = []
-
-# # for i in range(len(angles)):
-# #     if angles[i] == 0:
-# #         pos_lights.append([50,0,4])
-# #     elif angles[i] == 90:
-# #         pos_lights.append([0,50,4])
-# #     elif angles[i] == 180:
-# #         pos_lights.append([-50,0,4])
-# #     else:
-# #         pos_lights.append([0,-50,4])
-
-
-# # call functions
-
-# # dictionary containing as key the i,j coordinates of the pixels and as value their cartesian coordinates
-# # dic_img1 = {}
-# # dic_img2 = {}
-# # dic_img3 = {}
-# # dic_img4 = {}
-
-# # px_plane_coord = {}
-# # for i in range(nr_images):
-
-# # for e in img_names:
-# #     create_img(e, )
-# create_img('img1',img1,dic_img1, math.radians(90))
-# create_img('img2',img2,dic_img2,  math.radians(90))
-# # create_img('img3',img3,dic_img3,  math.radians(90))
-# # create_img('img4',img4,dic_img4,  math.radians(90))
-
-# for i in range(len(angles)):
-#     create_light(pos_lights[i])
-
-
-# # array containing name of the image the rays belong to and starting_point(light), ending_point1,ending_point2... of corner pixels for each img (4 for each img)
-# # corners_coord = []
-
-# # ray_light('img1', dic_img1, pos_lights[0], corners_coord)
-# # ray_light('img2',dic_img2, pos_lights[1], corners_coord)
-# # ray_light('img3',dic_img3, pos_lights[2], corners_coord)
-# # ray_light('img4',dic_img4, pos_lights[3], corners_coord)
-
-# # coordinates of voxels
-# # for each voxel rays from voxel center to each light source. The first 3 elements contains the origin of the ray (cube coordinates)
-# cubes_ray = []
-# hull_space()
-
-# # cubes which rays passes through active pixels for each image
-# active_cubes = []
-# # set of incosistent pixels -> active pixels in the images but empty in the corresponding shadow (= the voxel cannot be created because its ray doesn't intersect an active pixel one/more other image/s)
-# inconsistent_pixels = {}
-# for e in img_names:
-#     inconsistent_pixels[e] = []
-
-# empty_voxels = {}
-
-# active_voxels()
-
-# # print(inconsistent_pixels)
-# # print('-----')
-# # print(empty_voxels)
-
-# # using center of invalid pixels as key, as value we have the list of empty voxels (could have been created if no contraints by other images given)
-# # find_empty_voxels()
